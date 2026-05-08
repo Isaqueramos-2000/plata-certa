@@ -3,6 +3,9 @@
 App de identificação de plantas e guia de cuidados em pt-BR.
 Construído como **um único codebase** que roda em web (debug rápido), iOS e Android — sem reescrever nada.
 
+**🔗 Versão web ao vivo:** https://plata-certa.vercel.app
+**📦 Repo:** https://github.com/Isaqueramos-2000/plata-certa
+
 ## Stack
 
 - **Expo SDK 54** + React Native 0.81 + React Native Web 0.21
@@ -12,7 +15,8 @@ Construído como **um único codebase** que roda em web (debug rápido), iOS e A
 - **Zustand 4** + `@react-native-async-storage/async-storage` — estado global persistido
 - **expo-font** + Google Fonts (Fraunces, Inter) — tipografia
 - **expo-image-picker** + **expo-image** — captura e exibição de fotos
-- **`@anthropic-ai/sdk`** — integração com Claude (Sonnet 4.6 + Haiku 4.5) com prompt caching
+- **`@anthropic-ai/sdk`** — integração com Claude Haiku 4.5 (vision + chat) com prompt caching
+- **expo-image-manipulator** — resize 768×768 antes do upload pra cortar tokens de visão
 - **i18n-js** — internacionalização (pt-BR de partida)
 
 ## Como rodar
@@ -67,16 +71,22 @@ Crie `.env` a partir de `.env.example`:
 A identificação é desenhada pra ser **barata em escala**: o app não chama o LLM na maioria das vezes. O fluxo:
 
 ```
-Imagem → Stage 1 (Haiku 4.5)        → nome científico + confiança
-                ↓
-        Cache local (AsyncStorage)
-        chave: nome científico       → HIT  → guia cacheado, ~$0.002 total
-                ↓
-        MISS → Stage 2 (Sonnet 4.6)  → guia completo, salva no cache, ~$0.014 total
+Imagem → resize 768×768 (corta ~60% dos tokens de visão)
+   ↓
+Stage 1 (Haiku 4.5, ~$0.001) → nome científico + confiança
+   ↓
+Cache local (AsyncStorage, indexado por nome científico)
+   │
+   ├─ HIT  → guia cacheado, custo final ~$0.001
+   │
+   └─ MISS → Stage 2 (Haiku 4.5, ~$0.005) → guia completo, salva no cache
+              custo final ~$0.006
 ```
 
 **Pontos importantes:**
 
+- **Haiku 4.5 nas duas etapas** (era Sonnet no Stage 2): troca pegou um modelo 3× mais barato sem perda perceptível em planta comum. Pra casos de baixa confiança, dá pra implementar fallback Sonnet só nesses ~5%.
+- **Resize antes do upload**: `lib/imageResize.ts` reduz pra 768×768 jpeg quality 0.7 antes de mandar pra API. Tokens de visão caem de ~1500 pra ~640 (≈ –57%) — e como bônus, a foto vira `data:` URL portátil que persiste no localStorage entre sessões (resolve o bug de "foto some").
 - **Prompt caching da Anthropic** está ativo nos system prompts dos dois estágios (5min TTL no servidor da Anthropic, –90% no input dos tokens cacheados).
 - **Bundle seed** em `assets/mocks/seed-cache.ts` pré-popula o cache com espécies populares no primeiro launch. Pra adicionar novas, gere offline com Claude e cole no array `SEED_SPECIES` (incremente `SEED_VERSION` pra forçar re-seed).
 - **TTL** do cache local é **1 ano** — guias de cuidados quase não mudam. Pra produção, recomenda-se mover o cache pra um backend compartilhado (Supabase) pra que cada espécie seja gerada uma única vez para todos os usuários.
@@ -85,10 +95,11 @@ Imagem → Stage 1 (Haiku 4.5)        → nome científico + confiança
 
 | Cenário | Cache miss | Custo Claude | Total/mês |
 |---|---|---|---|
-| MVP (cache local) | ~20% (5K calls) | ~$60 (–prompt cache: ~$50) | **~$50** |
-| Produção (cache compartilhado, Supabase) | ~1% (250 calls) | ~$3 | **~$30** (incl. Supabase Pro) |
+| **Antes da otimização** (Sonnet, sem resize) | 20% (5K calls) | ~$95 | ~$95 |
+| **Atual** (Haiku + resize, cache local) | 20% (5K calls) | ~$30 | **~$30** |
+| **Produção** (cache compartilhado, Supabase) | 1% (250 calls) | ~$2 | **~$27** (com $25 Supabase) |
 
-Por usuário: **~$0,01/mês**. Margem confortável para qualquer modelo de assinatura.
+Por usuário: **~$0,006/mês** no atual. Margem brutal pra uma assinatura de R$10/mês (cobre o custo ~270×).
 
 ## Q&A sobre plantas (Haiku 4.5)
 
@@ -127,17 +138,104 @@ Cada `SavedPlant` carrega seu `wateringNotificationId` (ou null) pra permitir ca
 
 A camada AsyncStorage é localStorage no web e SQLite/SharedPreferences no mobile. Se um usuário tiver mais de ~500 plantas (improvável), vale migrar pra `expo-sqlite` direto pra ter queries indexadas.
 
-## Custo total combinado
+## Custo total combinado (otimizado)
 
-| Item | MVP (cache local) | Produção (backend + Supabase) |
+Pra **5.000 usuários ativos** (5 IDs/mês + 4 perguntas/mês cada):
+
+| Item | MVP atual (cache local) | Produção (backend + Supabase) |
 |---|---|---|
-| Identificação Claude (Sonnet + Haiku) | ~$50 | ~$10 |
+| Identificação (Haiku + resize) | ~$30 | ~$2 |
 | Q&A Haiku | ~$17 | ~$17 |
 | Supabase | – | $25 |
-| **Total/mês** | **~$67** | **~$52** |
-| **Por usuário/mês** | **~$0,013** | **~$0,010** |
+| **Total/mês** | **~$47** | **~$44** |
+| **Por usuário/mês** | **~$0,009** | **~$0,009** |
+| **Por usuário/ano** | **~$0,11** | **~$0,11** |
 
-Margem confortável pra qualquer assinatura entre R$3-10/mês.
+Com **assinatura R$10/mês** (≈ $1,80 USD) por usuário, **margem de ~200×** sobre o custo de IA. Espaço enorme pra cobrir App Store fee (15-30%), gateway de pagamento, marketing, suporte.
+
+| | Receita/usuário/mês | Custo IA | Margem bruta IA |
+|---|---|---|---|
+| R$10 plano básico | $1,80 | $0,009 | 99,5% |
+| R$10 com 30% Apple fee | $1,26 | $0,009 | 99,3% |
+
+## Deploy
+
+### Web (Vercel) — já no ar
+
+URL de produção: **https://plata-certa.vercel.app**
+
+```bash
+# Setup inicial (uma vez):
+vercel link --project plata-certa
+vercel env add EXPO_PUBLIC_ANTHROPIC_API_KEY production
+
+# Deploy de novas versões:
+vercel deploy --prod
+```
+
+`vercel.json` configura:
+- Build: `npx expo export --platform web` → produz `dist/`
+- Rewrites: tudo cai em `/index.html` (SPA — necessário pra rotas dinâmicas tipo `/plant/[id]`)
+
+### iOS (App Store) — roadmap
+
+Seu modelo: **assinatura R$10/mês**. Apple cobra **30% no primeiro ano, 15% após o ano** (Small Business Program ↓ pra 15% se faturamento &lt; $1M/ano — **provavelmente seu caso**).
+
+**Passo a passo:**
+
+1. **Apple Developer Program** — US$99/ano. Inscreva-se em https://developer.apple.com/programs/ com seu Apple ID.
+2. **Configurar `app.json`** pra produção:
+   - `ios.bundleIdentifier`: `com.seudominio.plantacerta` (escolha único)
+   - `ios.buildNumber`: `"1"`
+   - Ícones finais em `assets/images/icon.png` (1024×1024 sem transparência)
+   - Splash em `assets/images/splash-icon.png`
+3. **EAS Build** (build na nuvem da Expo, sem precisar de Mac local):
+   ```bash
+   npm install -g eas-cli
+   eas login
+   eas build:configure
+   eas build --platform ios --profile production
+   ```
+   Demora 15-30min. Resulta num `.ipa` pronto pra TestFlight.
+4. **App Store Connect** — https://appstoreconnect.apple.com:
+   - Cria o app com o mesmo bundle ID
+   - Sobe screenshots (5,5" iPhone obrigatório)
+   - Preenche descrição, privacy policy URL, support URL
+   - Configura **In-App Purchase de assinatura** (R$9,90 ou similar — Apple aceita centavos pra ficar elegante)
+5. **Integração de pagamento** — use **RevenueCat**:
+   - Free pra começar (até $2.5K MRR)
+   - Cuida da validação de receipts, cancelamentos, restore purchases
+   - Update `services/subscription.ts` (a criar) com `Purchases.getCustomerInfo()`
+   - Quando o usuário compra, chame `useQuestionsStore.getState().setLimit(100)` (ou ilimitado)
+6. **Submit pra review** — primeiro review demora 24-72h. Apple às vezes pede ajustes (descreve melhor, esconda recursos não disponíveis, etc.). Iteração faz parte.
+
+**Antes de submeter, leia:**
+- [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) — especialmente seções 3.1 (pagamentos), 5.1 (privacidade)
+- Privacy Policy obrigatória (mesmo de uma página em Notion público funciona; mencione: armazenamento local de fotos, envio anônimo à Anthropic, retenção zero)
+- LGPD: incluir botão "Apagar meus dados" no Perfil
+
+**Custo total pra subir o app:**
+
+| Item | Custo |
+|---|---|
+| Apple Developer Program | US$99/ano (~R$540) |
+| Domínio (opcional, pra privacy policy) | R$40/ano |
+| RevenueCat | $0 até $2.5K MRR |
+| Conta Vercel | Hobby grátis até bater limites (você está nele) |
+| **Total ano 1** | **~R$580** + custos de IA escaláveis |
+
+**Antes de Android:** rodar **Google Play** custa apenas $25 vitalício (não anual). Vale subir junto pra dobrar alcance — usa `eas build --platform android` com a mesma codebase.
+
+### ⚠️ ANTES de submeter pra review
+
+A chave Anthropic atual está embutida no bundle (variável `EXPO_PUBLIC_*`). **Quem baixar o app vai conseguir extrair a chave.** Antes do TestFlight público / submit:
+
+1. Crie um Cloudflare Worker (ou Vercel Function) que recebe `{ image: base64 }` e chama o Claude no backend
+2. Atualize `services/plantAI.ts` e `services/plantChat.ts` pra usar `fetch('/api/identify', ...)` em vez do SDK
+3. Migre o cache pra Supabase (mesma interface, novo backend)
+4. Rotacione a chave atual no console Anthropic — considere ela vazada
+
+Posso te ajudar a montar esse backend quando chegar a hora.
 
 ## Mock mode
 
