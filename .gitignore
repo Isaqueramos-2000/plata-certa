@@ -46,3 +46,8 @@ app-example
 .claude/settings.local.json
 
 .vercel
+
+# Credentials — NUNCA commitar
+google-play-key.json
+firebase-service-account.json
+*.serviceaccount.json
