@@ -50,7 +50,6 @@ function makePlant(overrides: Partial<SavedPlant>): SavedPlant {
     lastWateredAt: null,
     nextWateringAt: null,
     careLog: [],
-    chatHistory: [],
     wateringNotificationId: null,
     ...overrides,
   };

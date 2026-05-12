@@ -21,13 +21,17 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.cream,
           borderTopColor: colors.creamDark,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 72,
+          paddingBottom: 12,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '500',
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: 0,
         },
         headerShown: false,
         tabBarButton: HapticTab,
@@ -36,28 +40,28 @@ export default function TabLayout() {
         name="index"
         options={{
           title: t('tabs.home'),
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="leaf.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="leaf.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="identify"
         options={{
           title: t('tabs.identify'),
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="camera.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="camera.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="learn"
         options={{
           title: t('tabs.learn'),
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="book.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="book.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="person.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="person.fill" color={color} />,
         }}
       />
     </Tabs>

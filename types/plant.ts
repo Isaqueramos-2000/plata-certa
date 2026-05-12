@@ -58,8 +58,6 @@ export type SavedPlant = {
   lastWateredAt: string | null;
   nextWateringAt: string | null;
   careLog: CareLogEntry[];
-  /** Histórico de Q&A com a IA sobre essa planta. */
-  chatHistory: ChatMessage[];
   /** ID do lembrete de rega agendado (expo-notifications). null se não há. */
   wateringNotificationId: string | null;
 };
@@ -74,17 +72,3 @@ export type CareLogEntry = {
   photoUri?: string;
 };
 
-/**
- * Mensagem em uma conversa de Q&A sobre uma planta. Persistida por
- * planta no gardenStore (Fase 5); na result.tsx a conversa fica em
- * memória local até o usuário salvar a planta.
- */
-export type ChatRole = 'user' | 'assistant';
-
-export type ChatMessage = {
-  id: string;
-  role: ChatRole;
-  content: string;
-  /** ISO timestamp de criação. */
-  createdAt: string;
-};

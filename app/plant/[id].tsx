@@ -7,8 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { confirmDestructive } from '@/lib/confirm';
 
-import { AskPanel } from '@/components/plant/AskPanel';
-import { askAboutPlant } from '@/services/plantChat';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -28,8 +26,6 @@ export default function PlantDetailScreen() {
   const logCare = useGardenStore((s) => s.logCare);
   const removePlant = useGardenStore((s) => s.removePlant);
   const addPhoto = useGardenStore((s) => s.addPhoto);
-  const addChatExchange = useGardenStore((s) => s.addChatExchange);
-
   if (!plant) return <NotFound />;
 
   const status = computeWateringStatus(plant);
@@ -141,21 +137,6 @@ export default function PlantDetailScreen() {
               <Timeline entries={plant.careLog} />
             </View>
 
-            <View
-              style={{
-                marginTop: 32,
-                paddingTop: 24,
-                borderTopWidth: 1,
-                borderTopColor: colors.creamDark,
-              }}
-            >
-              <AskPanel
-                history={plant.chatHistory}
-                onAsk={(q, h) => askAboutPlant(plant.identification, q, h)}
-                onExchange={(q, a) => addChatExchange(plant.id, q, a)}
-                subtitle={`Pergunte qualquer coisa sobre ${plant.nickname}. Respostas curtas, direto ao ponto.`}
-              />
-            </View>
           </View>
         </ScrollView>
       </View>

@@ -11,7 +11,6 @@ import {
 import type {
   CareAction,
   CareLogEntry,
-  ChatMessage,
   PlantIdentification,
   SavedPlant,
 } from '@/types/plant';
@@ -47,9 +46,6 @@ type State = {
   /** Adiciona uma foto à galeria + entrada no log com action='photo'. */
   addPhoto: (id: string, uri: string) => void;
 
-  /** Persiste um par pergunta/resposta na conversa da planta. */
-  addChatExchange: (id: string, question: ChatMessage, answer: ChatMessage) => void;
-
   /** Útil em desenvolvimento. */
   clear: () => void;
 };
@@ -74,7 +70,6 @@ export const useGardenStore = create<State>()(
           lastWateredAt: null,
           nextWateringAt: next,
           careLog: [],
-          chatHistory: [],
           wateringNotificationId: null,
         };
         set({ plants: [plant, ...get().plants] });
@@ -176,16 +171,6 @@ export const useGardenStore = create<State>()(
               careLog: [entry, ...p.careLog],
             };
           }),
-        });
-      },
-
-      addChatExchange: (id, question, answer) => {
-        set({
-          plants: get().plants.map((p) =>
-            p.id === id
-              ? { ...p, chatHistory: [...p.chatHistory, question, answer] }
-              : p,
-          ),
         });
       },
 

@@ -123,23 +123,6 @@ describe('gardenStore.removePlant', () => {
   });
 });
 
-describe('gardenStore.addChatExchange', () => {
-  it('persiste pergunta e resposta na ordem certa', () => {
-    const id = useGardenStore.getState().addPlant({
-      identification: makeIdentification(),
-      photoUri: 'x',
-      nickname: 'A',
-    });
-    const q = { id: 'q', role: 'user' as const, content: 'Como rego?', createdAt: '' };
-    const a = { id: 'a', role: 'assistant' as const, content: 'A cada 5 dias.', createdAt: '' };
-    useGardenStore.getState().addChatExchange(id, q, a);
-    const chat = useGardenStore.getState().plants[0]!.chatHistory;
-    expect(chat).toHaveLength(2);
-    expect(chat[0]!.role).toBe('user');
-    expect(chat[1]!.role).toBe('assistant');
-  });
-});
-
 describe('gardenStore.updateNickname', () => {
   it('atualiza apelido', () => {
     const id = useGardenStore.getState().addPlant({

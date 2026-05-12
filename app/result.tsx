@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AskPanel } from '@/components/plant/AskPanel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -13,10 +12,9 @@ import { Tabs, type TabItem } from '@/components/ui/Tabs';
 import { Body, Caption, Heading } from '@/components/ui/Text';
 import { isWeb } from '@/lib/platform';
 import { colors } from '@/lib/theme';
-import { askAboutPlant } from '@/services/plantChat';
 import { useIdentificationStore } from '@/stores/identificationStore';
 import type { IdentifySource } from '@/services/plantAI';
-import type { ChatMessage, CommonProblem, Confidence, PlantIdentification } from '@/types/plant';
+import type { CommonProblem, Confidence, PlantIdentification } from '@/types/plant';
 
 type Tab = 'care' | 'calendar' | 'curiosities' | 'problems';
 
@@ -32,11 +30,6 @@ const WEB_MAX_WIDTH = 480;
 export default function ResultScreen() {
   const current = useIdentificationStore((s) => s.current);
   const [activeTab, setActiveTab] = useState<Tab>('care');
-  // Histórico de Q&A em memória até o usuário salvar a planta. Quando
-  // a Fase 5 entrar com o gardenStore, plantas salvas vão persistir
-  // o próprio histórico e este state vira fallback pra plantas não
-  // salvas.
-  const [chat, setChat] = useState<ChatMessage[]>([]);
 
   // Sem identificação no store (refresh ou deep link). Mostramos um
   // fallback amigável com CTA pra voltar.
@@ -90,21 +83,6 @@ export default function ResultScreen() {
               )}
             </View>
 
-            <View
-              style={{
-                marginTop: 32,
-                paddingTop: 24,
-                borderTopWidth: 1,
-                borderTopColor: colors.creamDark,
-              }}
-            >
-              <AskPanel
-                history={chat}
-                onAsk={(q, h) => askAboutPlant(identification, q, h)}
-                onExchange={(q, a) => setChat((prev) => [...prev, q, a])}
-                subtitle={`Pergunte qualquer coisa sobre ${identification.commonName}. Respostas curtas, direto ao ponto.`}
-              />
-            </View>
           </View>
         </ScrollView>
         <Footer onAdd={() => router.push('/add-to-garden')} />

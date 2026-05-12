@@ -26,7 +26,6 @@ import { setupNotifications } from '@/services/notifications';
 import { seedCacheIfNeeded } from '@/services/speciesCache';
 import { useGardenStore } from '@/stores/gardenStore';
 import { useIdentificationStore } from '@/stores/identificationStore';
-import { useQuestionsStore } from '@/stores/questionsStore';
 import { useHasHydrated, useSettingsStore } from '@/stores/settingsStore';
 
 import '../global.css';
@@ -103,7 +102,6 @@ export default function RootLayout() {
     (window as { __plantDev?: unknown }).__plantDev = {
       stores: {
         identification: useIdentificationStore,
-        questions: useQuestionsStore,
         settings: useSettingsStore,
         garden: useGardenStore,
       },
