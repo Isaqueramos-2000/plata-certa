@@ -28,6 +28,9 @@ const MAPPING = {
   'sun.max.fill': 'wb-sunny',
   'trash.fill': 'delete',
   'ellipsis': 'more-horiz',
+  'star.fill': 'star',
+  'crown.fill': 'workspace-premium',
+  'lock.fill': 'lock',
 } as IconMapping;
 
 /**

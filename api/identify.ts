@@ -216,7 +216,7 @@ type Res = {
 export default async function handler(req: Req, res: Res): Promise<void> {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Device-ID, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Device-ID, X-Subscription-Tier, Authorization');
 
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST') { res.status(405).json({ error: 'method-not-allowed' }); return; }
@@ -249,6 +249,11 @@ export default async function handler(req: Req, res: Res): Promise<void> {
 
   // UID Firebase > device ID > IP — em ordem de confiabilidade
   const rateLimitKey = uid ?? deviceId;
+
+  // Tier do usuário (informativo por enquanto — V2 vai validar via webhook).
+  const rawTier = req.headers['x-subscription-tier'];
+  const tier = (Array.isArray(rawTier) ? rawTier[0] : rawTier) === 'pro' ? 'pro' : 'free';
+  console.log(`[identify] tier=${tier} key=${rateLimitKey.slice(0, 12)}`);
 
   if (!checkRate(rateLimitKey)) {
     res.status(429).json({

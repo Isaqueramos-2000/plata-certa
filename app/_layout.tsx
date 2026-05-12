@@ -23,11 +23,13 @@ import { colors } from '@/lib/theme';
 import { MOCK_IDENTIFICATIONS } from '@/assets/mocks/identifications';
 import { SEED_VERSION } from '@/assets/mocks/seed-cache';
 import { ensureFirebaseUser } from '@/lib/firebase';
+import { initPurchases } from '@/lib/purchases';
 import { setupNotifications } from '@/services/notifications';
 import { seedCacheIfNeeded } from '@/services/speciesCache';
 import { useGardenStore } from '@/stores/gardenStore';
 import { useIdentificationStore } from '@/stores/identificationStore';
 import { useHasHydrated, useSettingsStore } from '@/stores/settingsStore';
+import { useSubscriptionStore } from '@/stores/subscriptionStore';
 
 import '../global.css';
 
@@ -97,7 +99,14 @@ export default function RootLayout() {
     setupNotifications().catch(() => {});
     // Login anônimo em background — gera UID verificável para o backend.
     // No-op silencioso se Firebase não estiver configurado no .env.
-    ensureFirebaseUser().catch(() => {});
+    // Encadeia a inicialização do RevenueCat com o UID Firebase para
+    // permitir cross-device sync de assinaturas.
+    ensureFirebaseUser()
+      .then((user) => initPurchases(user?.uid ?? null))
+      .catch(() => initPurchases(null));
+    // Reset lazy do contador mensal de identificações (caso o user tenha
+    // ficado fora do app virando o mês).
+    useSubscriptionStore.getState().resetMonthlyIfNeeded();
   }, []);
 
   // Expõe stores no window em dev pra debug rápido no DevTools e testes
@@ -131,6 +140,10 @@ export default function RootLayout() {
           <Stack.Screen
             name="onboarding"
             options={{ headerShown: false, animation: 'fade' }}
+          />
+          <Stack.Screen
+            name="paywall"
+            options={{ headerShown: false, animation: 'slide_from_bottom' }}
           />
           <Stack.Screen
             name="result"

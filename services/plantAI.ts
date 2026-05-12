@@ -25,6 +25,7 @@ import { getDeviceId } from '@/lib/deviceId';
 import { getFirebaseToken } from '@/lib/firebase';
 import { parseAndValidate } from '@/services/jsonParser';
 import { getCached, setCached } from '@/services/speciesCache';
+import { useSubscriptionStore } from '@/stores/subscriptionStore';
 import type { PlantIdentification } from '@/types/plant';
 
 /**
@@ -85,6 +86,9 @@ async function callBackend(
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Device-ID': deviceId,
+    // Informa o tier do usuário para auditoria/log no backend.
+    // V1: client-side. V2 (futuro): backend valida via webhook RevenueCat.
+    'X-Subscription-Tier': useSubscriptionStore.getState().entitlement,
   };
   // Se Firebase estiver configurado, envia o token JWT para verificação
   // criptográfica no backend — muito mais seguro que só o device ID.

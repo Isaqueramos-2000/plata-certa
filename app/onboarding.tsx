@@ -26,7 +26,9 @@ export default function Onboarding() {
   const finish = (mode: DisplayMode) => {
     setMode(mode);
     setHasOnboarded(true);
-    router.replace('/(tabs)');
+    // Mostra o paywall logo após o onboarding. O usuário pode pular com
+    // "Começar com 3 grátis" e entrar diretamente no app.
+    router.replace('/paywall');
   };
 
   return (

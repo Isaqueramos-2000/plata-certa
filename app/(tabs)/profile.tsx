@@ -8,6 +8,7 @@ import { Body, Caption, Heading } from '@/components/ui/Text';
 import { t } from '@/lib/i18n';
 import { colors } from '@/lib/theme';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useSubscriptionStore, TRIAL_MAX, MONTHLY_MAX } from '@/stores/subscriptionStore';
 
 export default function ProfileScreen() {
   const { mode, notificationsEnabled, setMode, setNotificationsEnabled, resetOnboarding } =
@@ -18,6 +19,10 @@ export default function ProfileScreen() {
       <View style={{ paddingTop: 16, paddingBottom: 8 }}>
         <Heading level={1}>{t('profile.title')}</Heading>
       </View>
+
+      <Section title="Sua Assinatura">
+        <SubscriptionCard />
+      </Section>
 
       <Section title={t('profile.displayMode')}>
         <Card>
@@ -89,11 +94,91 @@ export default function ProfileScreen() {
                 router.replace('/onboarding');
               }}
             />
+            <Divider />
+            <Row
+              label="Resetar assinatura"
+              hint="Volta para o trial (3 grátis)"
+              onPress={() => useSubscriptionStore.getState().resetAll()}
+            />
           </Card>
         </Section>
       ) : null}
     </Screen>
   );
+}
+
+function SubscriptionCard() {
+  const entitlement = useSubscriptionStore((s) => s.entitlement);
+  const plan = useSubscriptionStore((s) => s.plan);
+  const trialUsed = useSubscriptionStore((s) => s.trialUsed);
+  const monthlyUsed = useSubscriptionStore((s) => s.monthlyUsed);
+  const expiresAt = useSubscriptionStore((s) => s.expiresAt);
+
+  const isPro = entitlement === 'pro';
+  const remaining = isPro ? MONTHLY_MAX - monthlyUsed : TRIAL_MAX - trialUsed;
+  const planLabel =
+    plan === 'weekly' ? 'Semanal' : plan === 'monthly' ? 'Mensal' : plan === 'yearly' ? 'Anual' : '';
+
+  return (
+    <Card>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: isPro ? colors.sage : colors.creamDark,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <IconSymbol
+            name={isPro ? 'crown.fill' : 'leaf.fill'}
+            size={22}
+            color={isPro ? colors.cream : colors.sageDark}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Body style={{ fontWeight: '700' }}>
+            {isPro ? `PlantaCerta Pro · ${planLabel}` : 'Plano gratuito'}
+          </Body>
+          <Caption tone="mute" className="mt-0.5">
+            {isPro
+              ? `${remaining} de ${MONTHLY_MAX} identificações este mês` +
+                (expiresAt ? ` · Renova ${formatDate(expiresAt)}` : '')
+              : `${remaining} de ${TRIAL_MAX} identificações grátis`}
+          </Caption>
+        </View>
+      </View>
+      <View style={{ marginTop: 12 }}>
+        <Pressable
+          onPress={() => router.push('/paywall')}
+          accessibilityRole="button"
+          accessibilityLabel={isPro ? 'Gerenciar plano' : 'Ver planos'}
+          style={({ pressed }) => ({
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            borderRadius: 10,
+            backgroundColor: pressed ? colors.creamDark : 'transparent',
+            borderWidth: 1,
+            borderColor: colors.sage,
+            alignSelf: 'flex-start',
+          })}
+        >
+          <Caption style={{ color: colors.sageDark, fontWeight: '600' }}>
+            {isPro ? 'Gerenciar plano' : 'Ver planos'}
+          </Caption>
+        </Pressable>
+      </View>
+    </Card>
+  );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}`;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

@@ -4,12 +4,14 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
+import { LimitReachedSheet } from '@/components/plant/LimitReachedSheet';
 import { LoadingMessages } from '@/components/plant/LoadingMessages';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Screen } from '@/components/ui/Screen';
 import { Body, Caption, Heading } from '@/components/ui/Text';
+import { useCanIdentify } from '@/hooks/useCanIdentify';
 import { resizeForUpload } from '@/lib/imageResize';
 import { isWeb } from '@/lib/platform';
 import { colors } from '@/lib/theme';
@@ -19,6 +21,7 @@ import {
   toIdentifyError,
 } from '@/services/plantAI';
 import { useIdentificationStore } from '@/stores/identificationStore';
+import { useSubscriptionStore } from '@/stores/subscriptionStore';
 
 type Stage =
   | { kind: 'idle' }
@@ -27,7 +30,10 @@ type Stage =
 
 export default function IdentifyScreen() {
   const [stage, setStage] = useState<Stage>({ kind: 'idle' });
+  const [limitSheet, setLimitSheet] = useState<'trial-exhausted' | 'monthly-exhausted' | null>(null);
   const setIdentification = useIdentificationStore((s) => s.set);
+  const gate = useCanIdentify();
+  const consumeOne = useSubscriptionStore((s) => s.consumeOne);
 
   const handleAsset = async (asset: ImagePicker.ImagePickerAsset) => {
     try {
@@ -45,6 +51,10 @@ export default function IdentifyScreen() {
   };
 
   const pickFromCamera = async () => {
+    if (!gate.canIdentify) {
+      setLimitSheet(gate.reason === 'trial-exhausted' ? 'trial-exhausted' : 'monthly-exhausted');
+      return;
+    }
     if (!isWeb) {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
@@ -60,6 +70,10 @@ export default function IdentifyScreen() {
   };
 
   const pickFromGallery = async () => {
+    if (!gate.canIdentify) {
+      setLimitSheet(gate.reason === 'trial-exhausted' ? 'trial-exhausted' : 'monthly-exhausted');
+      return;
+    }
     if (!isWeb) {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
@@ -75,9 +89,15 @@ export default function IdentifyScreen() {
   };
 
   const analyze = async (uri: string, base64: string) => {
+    if (!gate.canIdentify) {
+      setLimitSheet(gate.reason === 'trial-exhausted' ? 'trial-exhausted' : 'monthly-exhausted');
+      return;
+    }
     setStage({ kind: 'analyzing', uri });
     try {
       const result = await identifyPlant(base64, 'image/jpeg');
+      // Sucesso → consome 1 do trial/quota
+      consumeOne();
       setIdentification({ uri, ...result });
       router.push('/result');
       // Volta o estado pra idle pra evitar reanalizar quando voltar
@@ -105,6 +125,8 @@ export default function IdentifyScreen() {
         </Body>
       </View>
 
+      <QuotaBadge remaining={gate.remaining} total={gate.total} reason={gate.reason} />
+
       {stage.kind === 'idle' ? (
         <IdleState onCamera={pickFromCamera} onGallery={pickFromGallery} />
       ) : stage.kind === 'preview' ? (
@@ -116,7 +138,52 @@ export default function IdentifyScreen() {
       ) : (
         <AnalyzingState uri={stage.uri} />
       )}
+
+      <LimitReachedSheet
+        visible={limitSheet !== null}
+        onClose={() => setLimitSheet(null)}
+        reason={limitSheet ?? 'trial-exhausted'}
+      />
     </Screen>
+  );
+}
+
+function QuotaBadge({
+  remaining,
+  total,
+  reason,
+}: {
+  remaining: number;
+  total: number;
+  reason: 'trial' | 'pro' | 'trial-exhausted' | 'monthly-exhausted';
+}) {
+  const isProActive = reason === 'pro';
+  const isLowTrial = reason === 'trial' && remaining <= 1;
+  return (
+    <View
+      style={{
+        marginTop: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 12,
+        backgroundColor: isLowTrial ? '#F5E1D4' : colors.sageLight,
+        alignSelf: 'flex-start',
+      }}
+    >
+      <IconSymbol
+        name={isProActive ? 'star.fill' : 'leaf.fill'}
+        size={14}
+        color={colors.sageDark}
+      />
+      <Body size="small" style={{ fontWeight: '600' }}>
+        {isProActive
+          ? `${remaining} de ${total} este mês`
+          : `${remaining} de ${total} identificações grátis`}
+      </Body>
+    </View>
   );
 }
 
