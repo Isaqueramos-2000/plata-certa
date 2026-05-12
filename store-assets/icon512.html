@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Icon 512</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:512px; height:512px; overflow:hidden; background:#FAF7F2; font-family:-apple-system,system-ui,sans-serif; display:flex; align-items:center; justify-content:center; }
+.bg {
+  width:512px; height:512px;
+  background: radial-gradient(circle at 38% 35%, #3D7A52, #1C4430 60%, #0F2A1E);
+  display:flex; align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
+}
+.ring1 { position:absolute; width:420px; height:420px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.08); }
+.ring2 { position:absolute; width:340px; height:340px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.06); }
+.leaf { font-size:240px; line-height:1; position:relative; z-index:1; filter:drop-shadow(0 8px 32px rgba(0,0,0,0.5)); }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="ring1"></div>
+  <div class="ring2"></div>
+  <div class="leaf">🌿</div>
+</div>
+</body>
+</html>

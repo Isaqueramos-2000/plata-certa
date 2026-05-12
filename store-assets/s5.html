@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>S5 — Histórico</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:1080px; height:1920px; overflow:hidden;
+  background: linear-gradient(160deg, #1A0C1A 0%, #1C0C1E 50%, #0E0610 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  position:relative;
+}
+h1 { position:absolute; top:110px; left:80px; right:80px; color:#fff; font-size:124px; font-weight:900; line-height:1.0; letter-spacing:-3px; }
+h1 span { color:#C77DDA; }
+.sub { position:absolute; bottom:130px; left:80px; right:80px; color:rgba(255,255,255,0.6); font-size:46px; font-weight:400; line-height:1.5; }
+
+.phone-wrap { position:absolute; left:50%; transform:translateX(-50%); top:490px; width:560px; filter:drop-shadow(0 60px 120px rgba(0,0,0,0.7)); }
+.phone { width:560px; height:1120px; background:#0C0C0C; border-radius:80px; border:10px solid #2A2A2A; overflow:hidden; box-shadow:inset 0 0 0 2px #3A3A3A; position:relative; }
+.phone::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:160px; height:36px; background:#0C0C0C; border-radius:0 0 24px 24px; z-index:10; }
+.screen { width:100%; height:100%; background:#FAF7F2; border-radius:70px; overflow:hidden; display:flex; flex-direction:column; }
+
+.status-bar { display:flex; justify-content:space-between; padding:24px 32px 0; color:#444; font-size:20px; font-weight:600; flex-shrink:0; }
+.hero { height:240px; background:linear-gradient(180deg,#2A4A32,#1C3225); display:flex; align-items:flex-end; padding:22px 30px; flex-shrink:0; gap:18px; }
+.hero-emoji { font-size:64px; }
+.hero-name { font-size:34px; font-weight:800; color:#fff; }
+.log-title { padding:20px 30px 10px; font-size:28px; font-weight:800; color:#1C2E24; flex-shrink:0; }
+.log-list { padding:0 24px; display:flex; flex-direction:column; overflow:hidden; }
+.log-item { display:flex; gap:16px; padding:16px 0; border-bottom:1px solid #F0EDE8; }
+.log-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.lw { background:#E3F2FD; } .lf { background:#E8F5E9; } .lp { background:#F3E5F5; } .lpr { background:#FFF8E1; }
+.laction { font-size:22px; font-weight:700; color:#1C2E24; }
+.ldate { font-size:18px; color:#8A9E90; margin-top:2px; }
+.lnote { font-size:17px; color:#5A7A60; margin-top:4px; font-style:italic; }
+</style>
+</head>
+<body>
+<h1>Cada cuidado<br/>registrado<br/>com <span>carinho</span></h1>
+<div class="phone-wrap"><div class="phone"><div class="screen">
+  <div class="status-bar"><span>9:41</span><span>●●● ▌</span></div>
+  <div class="hero">
+    <div class="hero-emoji">🌺</div>
+    <div><div class="hero-name">Orquídea Rosa</div></div>
+  </div>
+  <div class="log-title">Histórico de cuidados</div>
+  <div class="log-list">
+    <div class="log-item"><div class="log-icon lw">💧</div><div><div class="laction">Rega realizada</div><div class="ldate">Hoje, 08:14</div><div class="lnote">"Folhas bem hidratadas!"</div></div></div>
+    <div class="log-item"><div class="log-icon lp">📷</div><div><div class="laction">Foto adicionada</div><div class="ldate">Ontem, 17:32</div></div></div>
+    <div class="log-item"><div class="log-icon lf">🌱</div><div><div class="laction">Fertilização</div><div class="ldate">10 mai, 09:00</div><div class="lnote">"Adubo líquido diluído"</div></div></div>
+    <div class="log-item"><div class="log-icon lpr">✂️</div><div><div class="laction">Poda das folhas secas</div><div class="ldate">05 mai, 15:00</div></div></div>
+    <div class="log-item"><div class="log-icon lw">💧</div><div><div class="laction">Rega realizada</div><div class="ldate">03 mai, 08:30</div></div></div>
+  </div>
+</div></div></div>
+<div class="sub">Registre regas, podas, fotos e notas.<br/>Tudo salvo, sempre acessível.</div>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Feature Graphic</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:1024px; height:500px; overflow:hidden; font-family:-apple-system,system-ui,sans-serif; }
+.bg {
+  width:1024px; height:500px;
+  background: linear-gradient(120deg, #0B2216 0%, #1C4430 45%, #0F2A1E 100%);
+  display:flex; align-items:center;
+  position:relative; overflow:hidden;
+}
+/* decorative circles */
+.c1 { position:absolute; width:600px; height:600px; border-radius:50%; border:1px solid rgba(111,207,127,0.1); right:-100px; top:-100px; }
+.c2 { position:absolute; width:400px; height:400px; border-radius:50%; border:1px solid rgba(111,207,127,0.08); right:0px; top:-50px; }
+.c3 { position:absolute; width:200px; height:200px; border-radius:50%; background:rgba(111,207,127,0.05); right:140px; top:150px; }
+
+/* left text */
+.text { padding: 0 0 0 80px; z-index:1; }
+.tag { display:inline-flex; align-items:center; gap:8px; background:rgba(138,210,138,0.15); border:1px solid rgba(138,210,138,0.3); color:#8AD28A; font-size:14px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:7px 18px; border-radius:100px; margin-bottom:24px; }
+h1 { color:#fff; font-size:72px; font-weight:900; line-height:1.0; letter-spacing:-2px; margin-bottom:18px; }
+h1 span { color:#6FCF7F; }
+p { color:rgba(255,255,255,0.55); font-size:22px; font-weight:400; line-height:1.5; max-width:400px; }
+
+/* right phone */
+.phone-area { position:absolute; right:60px; top:50%; transform:translateY(-50%); }
+.phone { width:200px; height:400px; background:#0C0C0C; border-radius:36px; border:4px solid #2A2A2A; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 1px #3A3A3A; }
+.screen { width:100%; height:100%; background:#1A1A1A; display:flex; flex-direction:column; }
+.sb { display:flex; justify-content:space-between; padding:10px 14px 0; color:#eee; font-size:9px; font-weight:600; }
+.cam-area { flex:1; background:linear-gradient(180deg,#2A3A2A,#1A2A1A); display:flex; align-items:center; justify-content:center; position:relative; }
+.ring { position:absolute; width:120px; height:120px; border-radius:50%; border:2px solid rgba(111,207,127,0.5); }
+.plant { width:105px; height:105px; border-radius:50%; background:radial-gradient(circle at 40% 40%,#4A7A3A,#2A4A1A); display:flex; align-items:center; justify-content:center; font-size:50px; }
+.result { background:#FAF7F2; padding:12px; }
+.rbadge { display:inline-flex; align-items:center; gap:3px; background:#E8F5EC; color:#2E7D4F; font-size:8px; font-weight:700; padding:3px 8px; border-radius:100px; margin-bottom:5px; }
+.rname { font-size:13px; font-weight:800; color:#1C2E24; }
+.rsci { font-size:9px; color:#6B8C76; font-style:italic; }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="c1"></div><div class="c2"></div><div class="c3"></div>
+  <div class="text">
+    <div class="tag">🌿 PlantaCerta</div>
+    <h1>Identifique<br/>e cuide das<br/>suas <span>plantas</span></h1>
+    <p>IA que reconhece qualquer planta e entrega guia completo de cuidados em português.</p>
+  </div>
+  <div class="phone-area">
+    <div class="phone">
+      <div class="screen">
+        <div class="sb"><span>9:41</span><span>●●●</span></div>
+        <div class="cam-area">
+          <div class="ring"></div>
+          <div class="plant">🌿</div>
+        </div>
+        <div class="result">
+          <div class="rbadge">● Alta confiança</div>
+          <div class="rname">Costela de Adão</div>
+          <div class="rsci">Monstera deliciosa</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
