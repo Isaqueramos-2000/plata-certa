@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>S1 — Identificar</title>
+<link rel="stylesheet" href="_shared.css"/>
+<style>
+body { width:1080px; height:1920px; margin:0; overflow:hidden;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(168,201,164,0.08) 0%, transparent 50%),
+    linear-gradient(160deg, #0F2A1E 0%, #1F4530 50%, #0F2A1E 100%);
+  position:relative;
+}
+/* Bg leaves */
+.bg-deco { position:absolute; opacity:0.05; }
+.bg-deco.d1 { top:-100px; right:-60px; width:500px; height:500px; transform:rotate(20deg); }
+.bg-deco.d2 { bottom:200px; left:-80px; width:300px; height:300px; transform:rotate(-15deg); }
+
+.headline { position:absolute; top:120px; left:80px; right:80px; z-index:2; }
+.tag {
+  display:inline-flex; align-items:center; gap:10px;
+  background: rgba(168,201,164,0.15); border:1px solid rgba(168,201,164,0.3);
+  color:#A8C9A4; font-size:24px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase;
+  padding:10px 24px; border-radius:100px; margin-bottom:32px;
+}
+.tag svg { width:24px; height:24px; color:#A8C9A4; }
+h1 { font-family:'Fraunces', Georgia, serif; font-weight:700;
+  color:#fff; font-size:118px; line-height:0.95; letter-spacing:-3.5px; }
+h1 .ital { font-style:italic; color:#E0A584; }
+
+.sub { position:absolute; bottom:80px; left:80px; right:80px;
+  color:rgba(255,255,255,0.6); font-size:38px; line-height:1.45; z-index:2; }
+
+.phone-wrap { position:absolute; left:50%; transform:translateX(-50%); top:540px; }
+
+/* ─── Identify screen ────────────────────────────────────────────────── */
+.identify-screen { background: var(--cream); }
+.id-header { padding: 22px 28px 12px; }
+.id-greet { font-size:18px; color:var(--ink-mute); }
+.id-title { font-family:'Fraunces', serif; font-weight:700; font-size:38px; color:var(--ink); letter-spacing:-1px; margin-top:6px; }
+.id-sub { font-size:18px; color:var(--ink-soft); line-height:1.45; margin-top:8px; }
+
+.action-card {
+  background:#fff; border:1px solid var(--cream-dark); border-radius:18px;
+  margin:14px 24px 0; padding:22px; display:flex; align-items:center; gap:18px;
+  box-shadow: 0 4px 14px rgba(31,69,48,0.05);
+}
+.action-icon {
+  width:68px; height:68px; border-radius:34px; flex-shrink:0;
+  background: var(--sage-light); color: var(--sage-dark);
+  display:flex; align-items:center; justify-content:center;
+}
+.action-icon svg { width:36px; height:36px; }
+.action-body { flex:1; }
+.action-title { font-family:'Fraunces', serif; font-size:24px; font-weight:700; color:var(--ink); letter-spacing:-0.5px; }
+.action-sub { font-size:15px; color:var(--ink-soft); margin-top:4px; }
+.action-arrow { color:var(--ink-mute); }
+.action-arrow svg { width:24px; height:24px; }
+
+.tip {
+  margin:20px 24px 0; padding:18px;
+  background: var(--cream-dark); border-radius:16px;
+  display:flex; gap:12px; align-items:flex-start;
+}
+.tip-icon { font-size:24px; }
+.tip-text { font-size:15px; color:var(--ink-soft); line-height:1.5; }
+.tip-text b { color:var(--ink); }
+
+/* Photo preview area */
+.preview-wrap { margin:24px 24px 0; aspect-ratio:1; border-radius:18px; overflow:hidden; position:relative;
+  background: linear-gradient(135deg, #3D7A52, #1F4530); display:flex; align-items:center; justify-content:center; }
+.preview-wrap svg { width:280px; height:280px; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4)); }
+.scan-corners { position:absolute; inset:0; }
+.scan-corners::before, .scan-corners::after, .scan-corners > span:first-child::before, .scan-corners > span:first-child::after {
+  content:''; position:absolute; width:30px; height:30px;
+  border:3px solid #A8C9A4;
+}
+.scan-corners::before { top:20px; left:20px; border-right:none; border-bottom:none; border-radius:8px 0 0 0; }
+.scan-corners::after  { top:20px; right:20px; border-left:none; border-bottom:none; border-radius:0 8px 0 0; }
+.scan-corners > span:first-child::before { bottom:20px; left:20px; border-right:none; border-top:none; border-radius:0 0 0 8px; }
+.scan-corners > span:first-child::after  { bottom:20px; right:20px; border-left:none; border-top:none; border-radius:0 0 8px 0; }
+</style>
+</head>
+<body>
+
+<svg class="bg-deco d1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <use href="_svg.html#monstera"/>
+  <path d="M100 30 C 60 30, 30 70, 35 110 C 40 145, 75 165, 100 165 C 125 165, 160 145, 165 110 C 170 70, 140 30, 100 30 Z" fill="#A8C9A4"/>
+</svg>
+<svg class="bg-deco d2" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <path d="M100 30 C 60 30, 30 70, 35 110 C 40 145, 75 165, 100 165 C 125 165, 160 145, 165 110 C 170 70, 140 30, 100 30 Z" fill="#A8C9A4"/>
+</svg>
+
+<div class="headline">
+  <div class="tag">
+    <svg viewBox="0 0 24 24"><path d="M4 18C 4 10, 12 4, 20 4 C 20 12, 14 20, 6 20 C 6 20, 5 19.5, 4 18 Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+    PlantaCerta
+  </div>
+  <h1>Aponte.<br/>Foque.<br/><span class="ital">Identifique.</span></h1>
+</div>
+
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="screen identify-screen">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span class="right">
+          <svg viewBox="0 0 24 12" style="width:22px"><rect x="0" y="6" width="3" height="6" fill="currentColor"/><rect x="5" y="4" width="3" height="8" fill="currentColor"/><rect x="10" y="2" width="3" height="10" fill="currentColor"/><rect x="15" y="0" width="3" height="12" fill="currentColor"/></svg>
+          <svg viewBox="0 0 28 12" style="width:26px"><rect x="0" y="0" width="24" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="2" width="18" height="8" rx="1.5" fill="currentColor"/><rect x="25" y="4" width="2" height="4" rx="1" fill="currentColor"/></svg>
+        </span>
+      </div>
+      <div class="id-header">
+        <div class="id-greet">Bom dia</div>
+        <div class="id-title">Identificar planta</div>
+        <div class="id-sub">Tire ou escolha uma foto. Centralize a planta e procure boa iluminação.</div>
+      </div>
+
+      <div class="action-card">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l1-2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+        </div>
+        <div class="action-body">
+          <div class="action-title">Tirar foto</div>
+          <div class="action-sub">Use a câmera do dispositivo</div>
+        </div>
+        <div class="action-arrow"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+
+      <div class="action-card">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="8" cy="10" r="1.5" fill="currentColor"/><path d="M5 17 L 10 12 L 14 15 L 19 10 L 21 12 V 18 H 5 Z" fill="currentColor" opacity="0.4"/></svg>
+        </div>
+        <div class="action-body">
+          <div class="action-title">Escolher da galeria</div>
+          <div class="action-sub">Selecione uma foto que você já tem</div>
+        </div>
+        <div class="action-arrow"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+
+      <div class="preview-wrap">
+        <div class="scan-corners"><span></span></div>
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="mleaf" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#A8C9A4"/>
+              <stop offset="100%" stop-color="#3D7A52"/>
+            </linearGradient>
+          </defs>
+          <path d="M100 30 C 60 30, 30 70, 35 110 C 40 145, 75 165, 100 165 C 125 165, 160 145, 165 110 C 170 70, 140 30, 100 30 Z" fill="url(#mleaf)"/>
+          <path d="M100 45 L100 75" stroke="#1F4530" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+          <path d="M70 80 Q 60 85, 55 95 Q 50 105, 60 110" fill="#1F4530" opacity="0.4"/>
+          <path d="M130 80 Q 140 85, 145 95 Q 150 105, 140 110" fill="#1F4530" opacity="0.4"/>
+          <path d="M68 130 Q 60 130, 55 138 Q 52 145, 62 148" fill="#1F4530" opacity="0.35"/>
+          <path d="M132 130 Q 140 130, 145 138 Q 148 145, 138 148" fill="#1F4530" opacity="0.35"/>
+        </svg>
+      </div>
+
+      <div class="tip">
+        <div class="tip-icon">💡</div>
+        <div class="tip-text"><b>Dica:</b> fotos com fundo neutro e folhas em foco rendem identificações melhores.</div>
+      </div>
+
+      <div style="flex:1"></div>
+
+      <!-- Bottom tab bar -->
+      <div class="tab-bar">
+        <div class="tab-item">
+          <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M4 18C 4 10, 12 4, 20 4 C 20 12, 14 20, 6 20 C 6 20, 5 19.5, 4 18 Z" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+          <div class="tab-label">Início</div>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon active"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l1-2z" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="13" r="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+          <div class="tab-label active">Identificar</div>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M4 5 Q 4 4, 5 4 L 11 4 Q 12 4.5, 12 6 L 12 19 Q 12 18, 11 18 L 5 18 Q 4 18, 4 17 Z" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M20 5 Q 20 4, 19 4 L 13 4 Q 12 4.5, 12 6 L 12 19 Q 12 18, 13 18 L 19 18 Q 20 18, 20 17 Z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></div>
+          <div class="tab-label">Aprender</div>
+        </div>
+        <div class="tab-item">
+          <div class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 21 Q 4 14, 12 14 Q 20 14, 20 21" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></div>
+          <div class="tab-label">Perfil</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sub">Câmera ou galeria — a IA reconhece em segundos<br/>e mostra o que sua planta precisa.</div>
+
+</body>
+</html>
