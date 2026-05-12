@@ -22,6 +22,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { colors } from '@/lib/theme';
 import { MOCK_IDENTIFICATIONS } from '@/assets/mocks/identifications';
 import { SEED_VERSION } from '@/assets/mocks/seed-cache';
+import { ensureFirebaseUser } from '@/lib/firebase';
 import { setupNotifications } from '@/services/notifications';
 import { seedCacheIfNeeded } from '@/services/speciesCache';
 import { useGardenStore } from '@/stores/gardenStore';
@@ -94,6 +95,9 @@ export default function RootLayout() {
     // Configura o handler global e o canal Android pra notificações.
     // No-op silencioso no web.
     setupNotifications().catch(() => {});
+    // Login anônimo em background — gera UID verificável para o backend.
+    // No-op silencioso se Firebase não estiver configurado no .env.
+    ensureFirebaseUser().catch(() => {});
   }, []);
 
   // Expõe stores no window em dev pra debug rápido no DevTools e testes

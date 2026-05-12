@@ -33,6 +33,18 @@ vi.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
+// expo-file-system/legacy: no-op — testes não exercitam I/O de arquivo.
+vi.mock('expo-file-system/legacy', () => ({
+  documentDirectory: '/mock/documents/',
+  EncodingType: { Base64: 'base64', UTF8: 'utf8' },
+  makeDirectoryAsync: async () => {},
+  writeAsStringAsync: async () => {},
+  readAsStringAsync: async () => '',
+  copyAsync: async () => {},
+  deleteAsync: async () => {},
+  getInfoAsync: async () => ({ exists: false, isDirectory: false, uri: '', size: 0 }),
+}));
+
 // expo-notifications: no-op em todos os testes.
 vi.mock('expo-notifications', () => ({
   setNotificationHandler: () => {},

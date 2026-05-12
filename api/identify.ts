@@ -1,48 +1,66 @@
 /**
  * Vercel Serverless Function — proxy seguro para a Anthropic API.
  *
- * Por que existe este arquivo?
- * ----------------------------
- * A chave da Anthropic (ANTHROPIC_API_KEY) fica APENAS neste servidor.
- * O app mobile/web nunca vê a chave — ele só chama este endpoint.
+ * Camadas de segurança:
+ * ─────────────────────
+ * 1. ANTHROPIC_API_KEY fica APENAS neste servidor (nunca no app).
+ * 2. Firebase Auth: verifica o JWT anônimo gerado pelo app.
+ *    - Se FIREBASE_SERVICE_ACCOUNT estiver configurado, token inválido → 401.
+ *    - Sem configuração, aceita requisições e usa device ID (modo degradado).
+ * 3. Rate limiting: 20 identificações/hora por UID (ou device ID como fallback).
+ *    - Produção com múltiplas instâncias: troque _rateMap por Vercel KV.
  *
- * Rate limiting: 20 identificações por hora por device ID.
- * Produção: substitua _rateMap por Vercel KV para persistir entre instâncias.
+ * Env vars obrigatórias:
+ *   ANTHROPIC_API_KEY           — chave Anthropic (server-side)
  *
- * Endpoints:
- *   POST /api/identify  { imageBase64, mimeType, stage: 'quick'|'full' }
- *
- * Headers obrigatórios:
- *   X-Device-ID  — UUID gerado pelo app na primeira instalação
+ * Env vars opcionais (ativam Firebase):
+ *   FIREBASE_SERVICE_ACCOUNT    — JSON do service account (string)
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import * as admin from 'firebase-admin';
 
-// ─── Tipos inline (evita depender de @vercel/node no bundle Expo) ────────────
+// ─── Firebase Admin (inicialização única por instância) ───────────────────────
 
-type Req = {
-  method?: string;
-  body: {
-    imageBase64?: string;
-    mimeType?: 'image/jpeg' | 'image/png';
-    stage?: 'quick' | 'full';
-  };
-  headers: Record<string, string | string[] | undefined>;
-};
+function initFirebaseAdmin(): boolean {
+  if (admin.apps.length) return true;
+  const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!sa) return false;
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(sa) as admin.ServiceAccount),
+    });
+    return true;
+  } catch (err) {
+    console.error('[identify] Firebase Admin init error:', err);
+    return false;
+  }
+}
 
-type Res = {
-  status: (code: number) => Res;
-  json: (data: unknown) => void;
-  end: () => void;
-  setHeader: (name: string, value: string) => void;
-};
+const firebaseReady = initFirebaseAdmin();
 
-// ─── Rate limiting em memória ────────────────────────────────────────────────
-// Suficiente para evitar abuso casual. Para múltiplas instâncias simultâneas
-// use Vercel KV: https://vercel.com/docs/storage/vercel-kv
+/**
+ * Verifica o token JWT do Firebase e retorna o UID.
+ * Retorna null se o token for inválido ou se Firebase não estiver configurado.
+ */
+async function verifyFirebaseToken(authHeader: string | undefined): Promise<string | null> {
+  if (!firebaseReady) return null;
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  try {
+    const token = authHeader.slice(7);
+    const decoded = await admin.auth().verifyIdToken(token);
+    return decoded.uid;
+  } catch {
+    return null; // token expirado, malformado ou inválido
+  }
+}
+
+// ─── Rate limiting em memória ─────────────────────────────────────────────────
+// Por instância. Para persistir entre instâncias: Vercel KV.
+// https://vercel.com/docs/storage/vercel-kv
 
 const _rateMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 20;       // identificações por hora
+const RATE_LIMIT = 20;
 const HOUR_MS   = 3_600_000;
 
 function checkRate(id: string): boolean {
@@ -57,14 +75,12 @@ function checkRate(id: string): boolean {
   return true;
 }
 
-// ─── Cliente Anthropic (singleton por instância) ─────────────────────────────
+// ─── Cliente Anthropic ────────────────────────────────────────────────────────
 
 let _anthropic: Anthropic | null = null;
 function getClient(): Anthropic {
   if (!_anthropic) {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error('ANTHROPIC_API_KEY não configurada no servidor.');
-    }
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY não configurada.');
     _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
   return _anthropic;
@@ -142,7 +158,6 @@ function extractText(response: Anthropic.Messages.Message): string {
 }
 
 function parseJSON(text: string): unknown {
-  // Remove cercas markdown se o modelo as incluir mesmo sendo orientado a não fazer.
   let cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
   const first = cleaned.indexOf('{');
   const last  = cleaned.lastIndexOf('}');
@@ -150,10 +165,7 @@ function parseJSON(text: string): unknown {
   return JSON.parse(cleaned);
 }
 
-async function callQuickIdentify(
-  imageBase64: string,
-  mimeType: 'image/jpeg' | 'image/png',
-): Promise<unknown> {
+async function callQuickIdentify(imageBase64: string, mimeType: 'image/jpeg' | 'image/png'): Promise<unknown> {
   const response = await getClient().messages.create({
     model: STAGE1_MODEL,
     max_tokens: 256,
@@ -169,10 +181,7 @@ async function callQuickIdentify(
   return parseJSON(extractText(response));
 }
 
-async function callFullIdentify(
-  imageBase64: string,
-  mimeType: 'image/jpeg' | 'image/png',
-): Promise<unknown> {
+async function callFullIdentify(imageBase64: string, mimeType: 'image/jpeg' | 'image/png'): Promise<unknown> {
   const response = await getClient().messages.create({
     model: STAGE2_MODEL,
     max_tokens: 1024,
@@ -188,30 +197,60 @@ async function callFullIdentify(
   return parseJSON(extractText(response));
 }
 
+// ─── Tipos do handler ─────────────────────────────────────────────────────────
+
+type Req = {
+  method?: string;
+  body: { imageBase64?: string; mimeType?: 'image/jpeg' | 'image/png'; stage?: 'quick' | 'full' };
+  headers: Record<string, string | string[] | undefined>;
+};
+type Res = {
+  status: (code: number) => Res;
+  json: (data: unknown) => void;
+  end: () => void;
+  setHeader: (name: string, value: string) => void;
+};
+
 // ─── Handler principal ────────────────────────────────────────────────────────
 
 export default async function handler(req: Req, res: Res): Promise<void> {
-  // CORS — permite chamadas do app web (mesma origem) e do app mobile (origem diferente)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Device-ID');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Device-ID, Authorization');
 
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'method-not-allowed' });
+  if (req.method !== 'POST') { res.status(405).json({ error: 'method-not-allowed' }); return; }
+
+  // ── Autenticação Firebase ────────────────────────────────────────────────
+  const authHeader = Array.isArray(req.headers['authorization'])
+    ? req.headers['authorization'][0]
+    : req.headers['authorization'];
+
+  const uid = await verifyFirebaseToken(authHeader);
+
+  // Se Firebase estiver configurado e o token for inválido → rejeita.
+  // Sem Firebase configurado → aceita (modo degradado com device ID).
+  if (firebaseReady && !uid) {
+    res.status(401).json({
+      error: 'unauthorized',
+      message: 'Token de autenticação inválido ou expirado.',
+    });
     return;
   }
 
-  // Identifica o dispositivo: prefere o header customizado, cai para IP
+  // ── Rate limiting ────────────────────────────────────────────────────────
   const rawDeviceId = req.headers['x-device-id'];
-  const rawForwardedFor = req.headers['x-forwarded-for'];
+  const rawIp = req.headers['x-forwarded-for'];
   const deviceId = (
     (Array.isArray(rawDeviceId) ? rawDeviceId[0] : rawDeviceId) ||
-    (Array.isArray(rawForwardedFor) ? rawForwardedFor[0] : rawForwardedFor)?.split(',')[0].trim() ||
+    (Array.isArray(rawIp) ? rawIp[0] : rawIp)?.split(',')[0].trim() ||
     'unknown'
   );
 
-  if (!checkRate(deviceId)) {
+  // UID Firebase > device ID > IP — em ordem de confiabilidade
+  const rateLimitKey = uid ?? deviceId;
+
+  if (!checkRate(rateLimitKey)) {
     res.status(429).json({
       error: 'rate-limited',
       message: 'Muitas identificações seguidas. Aguarde alguns minutos.',
@@ -219,6 +258,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     return;
   }
 
+  // ── Validação do body ────────────────────────────────────────────────────
   const { imageBase64, mimeType = 'image/jpeg', stage } = req.body ?? {};
 
   if (!imageBase64) {
@@ -230,6 +270,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     return;
   }
 
+  // ── Chamada Anthropic ────────────────────────────────────────────────────
   try {
     const result = stage === 'quick'
       ? await callQuickIdentify(imageBase64, mimeType)
@@ -238,7 +279,6 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     res.status(200).json(result);
   } catch (err: unknown) {
     console.error('[identify] erro:', err);
-
     if (err instanceof Anthropic.APIError) {
       if (err.status === 429) {
         res.status(429).json({ error: 'rate-limited', message: 'Serviço temporariamente sobrecarregado.' });
@@ -251,7 +291,6 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       res.status(502).json({ error: 'upstream-error', message: 'Erro no serviço de IA.' });
       return;
     }
-
     res.status(500).json({ error: 'unknown', message: 'Algo inesperado aconteceu.' });
   }
 }

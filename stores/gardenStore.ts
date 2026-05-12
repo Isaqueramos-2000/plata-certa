@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { deletePhoto, generatePhotoId, savePhoto } from '@/lib/photoStorage';
 import { nextWateringFromNow } from '@/lib/wateringStatus';
 import {
   cancelPlantWatering,
@@ -63,7 +64,7 @@ export const useGardenStore = create<State>()(
         const plant: SavedPlant = {
           id,
           nickname: finalNickname,
-          photoUri,
+          photoUri,            // URI inicial (pode ser data: URL ou file://)
           photos: [photoUri],
           identification,
           addedAt: now,
@@ -74,9 +75,28 @@ export const useGardenStore = create<State>()(
         };
         set({ plants: [plant, ...get().plants] });
 
-        // Agenda lembrete em background. Pede permissão se for a primeira
-        // planta — falhas (negação, sem rede no caso do web) não bloqueiam
-        // o salvamento.
+        // Salva a foto no filesystem em background e atualiza o URI persistido.
+        // Isso migra data: URLs (base64 no AsyncStorage) para arquivos binários,
+        // liberando espaço no AsyncStorage. Falhas são silenciosas — a foto
+        // original continua funcionando.
+        (async () => {
+          try {
+            const persistentUri = await savePhoto(photoUri, generatePhotoId());
+            if (persistentUri !== photoUri) {
+              set({
+                plants: get().plants.map((p) =>
+                  p.id === id
+                    ? { ...p, photoUri: persistentUri, photos: [persistentUri] }
+                    : p,
+                ),
+              });
+            }
+          } catch (err) {
+            console.warn('[garden] savePhoto failed (kept original):', err);
+          }
+        })();
+
+        // Agenda lembrete em background.
         (async () => {
           const granted = await requestNotificationPermission();
           if (!granted) return;
@@ -97,6 +117,11 @@ export const useGardenStore = create<State>()(
         const plant = get().plants.find((p) => p.id === id);
         if (plant?.wateringNotificationId) {
           cancelPlantWatering(plant.wateringNotificationId).catch(() => {});
+        }
+        // Remove arquivos de foto do filesystem em background
+        if (plant) {
+          const uris = [...new Set([plant.photoUri, ...plant.photos])];
+          uris.forEach((uri) => deletePhoto(uri).catch(() => {}));
         }
         set({ plants: get().plants.filter((p) => p.id !== id) });
       },
@@ -156,11 +181,13 @@ export const useGardenStore = create<State>()(
       },
 
       addPhoto: (id, uri) => {
+        const entryId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        // Salva no state imediatamente (URI original) e persiste no filesystem em background
         set({
           plants: get().plants.map((p) => {
             if (p.id !== id) return p;
             const entry: CareLogEntry = {
-              id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              id: entryId,
               action: 'photo',
               at: new Date().toISOString(),
               photoUri: uri,
@@ -172,6 +199,27 @@ export const useGardenStore = create<State>()(
             };
           }),
         });
+        // Migra para filesystem em background
+        (async () => {
+          try {
+            const persistentUri = await savePhoto(uri, generatePhotoId());
+            if (persistentUri === uri) return;
+            set({
+              plants: get().plants.map((p) => {
+                if (p.id !== id) return p;
+                return {
+                  ...p,
+                  photos: p.photos.map((u) => (u === uri ? persistentUri : u)),
+                  careLog: p.careLog.map((e) =>
+                    e.id === entryId ? { ...e, photoUri: persistentUri } : e,
+                  ),
+                };
+              }),
+            });
+          } catch (err) {
+            console.warn('[garden] addPhoto save failed (kept original):', err);
+          }
+        })();
       },
 
       clear: () => set({ plants: [] }),

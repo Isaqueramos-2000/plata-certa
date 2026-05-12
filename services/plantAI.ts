@@ -22,6 +22,7 @@ import {
   MOCK_IDENTIFICATIONS,
 } from '@/assets/mocks/identifications';
 import { getDeviceId } from '@/lib/deviceId';
+import { getFirebaseToken } from '@/lib/firebase';
 import { parseAndValidate } from '@/services/jsonParser';
 import { getCached, setCached } from '@/services/speciesCache';
 import type { PlantIdentification } from '@/types/plant';
@@ -76,16 +77,26 @@ async function callBackend(
   imageBase64: string,
   mimeType: 'image/jpeg' | 'image/png',
 ): Promise<unknown> {
-  const deviceId = await getDeviceId();
+  const [deviceId, firebaseToken] = await Promise.all([
+    getDeviceId(),
+    getFirebaseToken().catch(() => null),
+  ]);
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Device-ID': deviceId,
+  };
+  // Se Firebase estiver configurado, envia o token JWT para verificação
+  // criptográfica no backend — muito mais seguro que só o device ID.
+  if (firebaseToken) {
+    headers['Authorization'] = `Bearer ${firebaseToken}`;
+  }
 
   let response: Response;
   try {
     response = await fetch(`${API_BASE}/api/identify`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Device-ID': deviceId,
-      },
+      headers,
       body: JSON.stringify({ imageBase64, mimeType, stage }),
     });
   } catch {
