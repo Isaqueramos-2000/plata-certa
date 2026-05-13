@@ -30,13 +30,16 @@ const browser = await puppeteer.launch({ headless: true });
 const page    = await browser.newPage();
 
 const assets = [
-  { url: 'icon',     label: 'icon-512',         w:  512, h:  512 },
-  { url: 'feature',  label: 'feature-1024x500', w: 1024, h:  500 },
-  { url: 's1',       label: '01-identificar',   w: 1080, h: 1920 },
-  { url: 's2',       label: '02-cuidados',      w: 1080, h: 1920 },
-  { url: 's3',       label: '03-jardim',        w: 1080, h: 1920 },
-  { url: 's4',       label: '04-rega',          w: 1080, h: 1920 },
-  { url: 's5',       label: '05-historico',     w: 1080, h: 1920 },
+  { url: 'icon',             label: 'icon-512',                w:  512, h:  512 },
+  { url: 'icon-foreground',  label: 'icon-foreground-432',     w:  432, h:  432, transparent: true },
+  { url: 'icon-background',  label: 'icon-background-432',     w:  432, h:  432 },
+  { url: 'icon-monochrome',  label: 'icon-monochrome-432',     w:  432, h:  432, transparent: true },
+  { url: 'feature',          label: 'feature-1024x500',        w: 1024, h:  500 },
+  { url: 's1',               label: '01-identificar',          w: 1080, h: 1920 },
+  { url: 's2',               label: '02-cuidados',             w: 1080, h: 1920 },
+  { url: 's3',               label: '03-jardim',               w: 1080, h: 1920 },
+  { url: 's4',               label: '04-rega',                 w: 1080, h: 1920 },
+  { url: 's5',               label: '05-historico',            w: 1080, h: 1920 },
 ];
 
 for (const a of assets) {
@@ -46,7 +49,11 @@ for (const a of assets) {
   await page.evaluate(() => document.fonts.ready);
   await new Promise(r => setTimeout(r, 200));
   const out = join(__dirname, `${a.label}.png`);
-  await page.screenshot({ path: out, fullPage: false });
+  await page.screenshot({
+    path: out,
+    fullPage: false,
+    omitBackground: !!a.transparent, // PNG transparente p/ foreground e monochrome
+  });
   console.log(`✅  ${a.label}.png`);
 }
 

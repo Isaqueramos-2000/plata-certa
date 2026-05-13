@@ -64,9 +64,22 @@ export const DEMO_OFFERINGS: Offering[] = [
 
 const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '';
 
-/** True se temos chave válida E plataforma suportada. */
+/**
+ * True se temos chave válida E plataforma suportada E está OK usar a chave.
+ *
+ * IMPORTANTE: o RevenueCat bloqueia builds release que usam chave `test_*`
+ * — isso é uma proteção deles contra compras acidentais. Detectamos esse
+ * cenário e caímos para modo demo local (sem o crash do "Wrong API Key").
+ *
+ * Quando o usuário trocar para a chave de produção (sem prefixo `test_`),
+ * o comportamento real volta automaticamente nos builds release.
+ */
 function isReal(): boolean {
-  return API_KEY.length > 0 && Platform.OS !== 'web';
+  if (API_KEY.length === 0) return false;
+  if (Platform.OS === 'web') return false;
+  // Chave de teste num build release → modo demo (evita crash do RC)
+  if (API_KEY.startsWith('test_') && !__DEV__) return false;
+  return true;
 }
 
 let _initialized = false;

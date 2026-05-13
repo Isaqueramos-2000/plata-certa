@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>Android Adaptive — Foreground</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { background: transparent; }
+body { width:432px; height:432px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+
+/* Android adaptive icon: safe area é o círculo central (66% do canvas).
+   O sistema corta as bordas para se adequar ao formato escolhido
+   pelo launcher (círculo, squircle, etc), então o conteúdo deve ficar
+   bem centralizado.
+*/
+.leaf-art {
+  width: 240px; height: 240px;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.45)) drop-shadow(0 0 12px rgba(168,201,164,0.35));
+}
+</style>
+</head>
+<body>
+<svg class="leaf-art" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="leafA" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#F0FFE8"/>
+      <stop offset="40%" stop-color="#C9F0C5"/>
+      <stop offset="100%" stop-color="#7AB082"/>
+    </linearGradient>
+    <linearGradient id="leafB" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#A8C9A4"/>
+      <stop offset="60%" stop-color="#5B9968"/>
+      <stop offset="100%" stop-color="#2D5F3F"/>
+    </linearGradient>
+    <linearGradient id="stem" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#7AB082"/>
+      <stop offset="100%" stop-color="#3D7A52"/>
+    </linearGradient>
+    <linearGradient id="leafShine" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Main stem -->
+  <path d="M100 180 Q 100 130, 100 60" stroke="url(#stem)" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M100 180 Q 100 130, 100 60" stroke="#1A3C2A" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+  <!-- 5 leaves -->
+  <g>
+    <ellipse cx="73"  cy="158" rx="26" ry="12" fill="url(#leafB)" transform="rotate(-35 73 158)"/>
+    <ellipse cx="73"  cy="158" rx="20" ry="6" fill="url(#leafShine)" transform="rotate(-35 73 158) translate(0 -4)"/>
+  </g>
+  <g>
+    <ellipse cx="127" cy="135" rx="28" ry="13" fill="url(#leafA)" transform="rotate(35 127 135)"/>
+    <ellipse cx="127" cy="135" rx="22" ry="7" fill="url(#leafShine)" transform="rotate(35 127 135) translate(0 -4)"/>
+  </g>
+  <g>
+    <ellipse cx="71"  cy="112" rx="28" ry="13" fill="url(#leafB)" transform="rotate(-35 71 112)"/>
+    <ellipse cx="71"  cy="112" rx="22" ry="7" fill="url(#leafShine)" transform="rotate(-35 71 112) translate(0 -4)"/>
+  </g>
+  <g>
+    <ellipse cx="129" cy="92"  rx="24" ry="12" fill="url(#leafA)" transform="rotate(35 129 92)"/>
+    <ellipse cx="129" cy="92"  rx="20" ry="6" fill="url(#leafShine)" transform="rotate(35 129 92) translate(0 -4)"/>
+  </g>
+  <g>
+    <ellipse cx="100" cy="50" rx="20" ry="30" fill="url(#leafA)"/>
+    <path d="M100 25 L 100 78" stroke="#3D7A52" stroke-width="1.8" stroke-linecap="round" opacity="0.45"/>
+    <ellipse cx="93" cy="40" rx="6" ry="12" fill="url(#leafShine)"/>
+  </g>
+</svg>
+</body>
+</html>

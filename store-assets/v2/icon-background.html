@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>Android Adaptive — Background</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:432px; height:432px; overflow:hidden; }
+
+/* Background do adaptive icon: cor sólida ou gradiente.
+   O sistema sobrepõe o foreground por cima.
+*/
+.bg {
+  width:432px; height:432px;
+  background:
+    radial-gradient(circle at 30% 25%, #5B9968 0%, transparent 55%),
+    radial-gradient(circle at 70% 75%, #1A3C2A 0%, transparent 60%),
+    linear-gradient(145deg, #3D7A52 0%, #2D5F3F 50%, #1A3C2A 100%);
+  position:relative;
+  overflow:hidden;
+}
+
+/* Sutil texture para profundidade */
+.noise {
+  position:absolute; inset:0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(168,201,164,0.15) 0, transparent 8%),
+    radial-gradient(circle at 80% 70%, rgba(168,201,164,0.1) 0, transparent 6%);
+}
+
+/* Anéis decorativos sutis */
+.ring { position:absolute; border-radius:50%; border:1.2px solid rgba(255,255,255,0.06); top:50%; left:50%; transform:translate(-50%, -50%); }
+.r1 { width:380px; height:380px; }
+.r2 { width:280px; height:280px; border-color:rgba(255,255,255,0.04); }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="noise"></div>
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+</div>
+</body>
+</html>
