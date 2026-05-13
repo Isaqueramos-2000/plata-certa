@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.plantacerta.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#2D5F3F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
