@@ -48,32 +48,37 @@ export default function Onboarding() {
     router.replace('/paywall');
   };
 
-  // Espaço extra no rodapé pra garantir que o botão não fique grudado na
-  // barra de gestos do Android. Soma o safe-area inset à um padding fixo.
-  const bottomGap = Math.max(insets.bottom, 16) + 16;
+  // Padding interno do rodapé (entre o botão e o limite da safe area).
+  const FOOTER_INNER_PADDING = 16;
 
   return (
+    // IMPORTANTE: aplicamos TANTO insets.top quanto insets.bottom no container
+    // raiz. Sem o paddingBottom, o container extende atrás da gesture bar do
+    // Android (edge-to-edge ativo), fazendo o rodapé absoluto com bottom:0
+    // ficar parcialmente escondido. Com paddingBottom, o "fundo" do container
+    // é o topo da gesture bar — exatamente onde queremos o botão.
     <View
       style={{
         flex: 1,
         backgroundColor: colors.cream,
         paddingTop: insets.top,
+        paddingBottom: insets.bottom,
       }}
     >
       <ProgressDots current={step} total={3} />
 
       {step === 1 ? (
-        <WelcomeStep onContinue={next} bottomGap={bottomGap} />
+        <WelcomeStep onContinue={next} bottomGap={FOOTER_INNER_PADDING} />
       ) : step === 2 ? (
         <ExperienceStep
-          bottomGap={bottomGap}
+          bottomGap={FOOTER_INNER_PADDING}
           onContinue={(level) => {
             setGardenerLevel(level);
             next();
           }}
         />
       ) : (
-        <ModeStep onFinish={finish} bottomGap={bottomGap} />
+        <ModeStep onFinish={finish} bottomGap={FOOTER_INNER_PADDING} />
       )}
     </View>
   );
@@ -149,11 +154,14 @@ function StepLayout({
           right: 0,
           bottom: 0,
           paddingHorizontal: 24,
-          paddingTop: 12,
+          paddingTop: 16,
           paddingBottom: bottomGap,
-          backgroundColor: colors.cream,
-          borderTopWidth: 1,
-          borderTopColor: colors.creamDark,
+          // DEBUG temporário: fundo creme-escuro (visível mas suave)
+          // pra confirmar que a área do rodapé está sendo renderizada
+          // corretamente. Trocar pra colors.cream depois de validar.
+          backgroundColor: colors.creamDark,
+          borderTopWidth: 2,
+          borderTopColor: colors.sage,
         }}
       >
         {footer}
