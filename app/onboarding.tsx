@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Screen } from '@/components/ui/Screen';
 import { Body, Caption, Heading } from '@/components/ui/Text';
 import { colors } from '@/lib/theme';
 import {
@@ -15,6 +15,22 @@ import {
 
 type Step = 1 | 2 | 3;
 
+/**
+ * Onboarding em 3 passos. Cada passo segue o mesmo padrão de layout:
+ *
+ *   ┌─────────────────────────────┐
+ *   │ Header (ProgressDots)       │ ← fixo no topo
+ *   ├─────────────────────────────┤
+ *   │ ScrollView (conteúdo)       │ ← rola se passar da altura
+ *   ├─────────────────────────────┤
+ *   │ Footer (botão de ação)      │ ← STICKY, sempre visível
+ *   └─────────────────────────────┘
+ *
+ * Esse padrão de "sticky footer" garante que o botão de avançar fique
+ * sempre visível, independente do tamanho da tela e do comportamento do
+ * Yoga (engine de layout do Android). É mais robusto que usar `flex: 1`
+ * em vários níveis aninhados (que renderiza ok no web mas falha no Android).
+ */
 export default function Onboarding() {
   const [step, setStep] = useState<Step>(1);
   const setHasOnboarded = useSettingsStore((s) => s.setHasOnboarded);
@@ -32,7 +48,10 @@ export default function Onboarding() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <SafeAreaView
+      edges={['top', 'bottom']}
+      style={{ flex: 1, backgroundColor: colors.cream }}
+    >
       <ProgressDots current={step} total={3} />
 
       {step === 1 ? (
@@ -47,7 +66,7 @@ export default function Onboarding() {
       ) : (
         <ModeStep onFinish={finish} />
       )}
-    </Screen>
+    </SafeAreaView>
   );
 }
 
@@ -77,10 +96,62 @@ function ProgressDots({ current, total }: { current: Step; total: number }) {
   );
 }
 
+// ─── Layout shell para cada passo (ScrollView + sticky footer) ──────────────
+
+function StepLayout({
+  children,
+  footer,
+}: {
+  children: React.ReactNode;
+  footer: React.ReactNode;
+}) {
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 8,
+          paddingBottom: 16,
+          flexGrow: 1,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
+      <View
+        style={{
+          paddingHorizontal: 24,
+          paddingTop: 12,
+          paddingBottom: 16,
+          backgroundColor: colors.cream,
+          // Sombra sutil pra indicar que é um rodapé fixo quando o
+          // conteúdo passa do tamanho da tela e rola.
+          borderTopWidth: 1,
+          borderTopColor: 'transparent',
+        }}
+      >
+        {footer}
+      </View>
+    </View>
+  );
+}
+
+// ─── Passo 1: Boas-vindas ───────────────────────────────────────────────────
+
 function WelcomeStep({ onContinue }: { onContinue: () => void }) {
   return (
-    <View style={{ flex: 1, paddingVertical: 24 }}>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <StepLayout
+      footer={<Button label="Começar" onPress={onContinue} fullWidth size="lg" />}
+    >
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 24,
+        }}
+      >
         <View
           style={{
             width: 160,
@@ -101,13 +172,11 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
           Identifique suas plantas e aprenda a cuidar delas com tranquilidade.
         </Body>
       </View>
-      {/* Botão sempre no rodapé visível, independente da altura da tela */}
-      <View style={{ marginTop: 16, paddingBottom: 8 }}>
-        <Button label="Começar" onPress={onContinue} fullWidth size="lg" />
-      </View>
-    </View>
+    </StepLayout>
   );
 }
+
+// ─── Passo 2: Nível de experiência ──────────────────────────────────────────
 
 function ExperienceStep({
   onContinue,
@@ -135,8 +204,18 @@ function ExperienceStep({
   ];
 
   return (
-    <View style={{ flex: 1, paddingVertical: 24 }}>
-      <View style={{ flex: 1 }}>
+    <StepLayout
+      footer={
+        <Button
+          label="Continuar"
+          fullWidth
+          size="lg"
+          disabled={!selected}
+          onPress={() => selected && onContinue(selected)}
+        />
+      }
+    >
+      <View style={{ paddingVertical: 16 }}>
         <Heading level={2}>Você já cuida de plantas?</Heading>
         <Body tone="soft" className="mt-2">
           Vamos personalizar as dicas iniciais para o seu nível.
@@ -170,26 +249,27 @@ function ExperienceStep({
           })}
         </View>
       </View>
-      {/* Botão sempre no rodapé visível, independente da altura da tela */}
-      <View style={{ marginTop: 16, paddingBottom: 8 }}>
-        <Button
-          label="Continuar"
-          fullWidth
-          size="lg"
-          disabled={!selected}
-          onPress={() => selected && onContinue(selected)}
-        />
-      </View>
-    </View>
+    </StepLayout>
   );
 }
+
+// ─── Passo 3: Modo de leitura ───────────────────────────────────────────────
 
 function ModeStep({ onFinish }: { onFinish: (mode: DisplayMode) => void }) {
   const [preview, setPreview] = useState<DisplayMode>('standard');
 
   return (
-    <View style={{ flex: 1, paddingVertical: 24 }}>
-      <View style={{ flex: 1 }}>
+    <StepLayout
+      footer={
+        <Button
+          label={preview === 'accessible' ? 'Usar modo acessível' : 'Usar modo padrão'}
+          fullWidth
+          size="lg"
+          onPress={() => onFinish(preview)}
+        />
+      }
+    >
+      <View style={{ paddingVertical: 16 }}>
         <Heading level={2}>Como você prefere ler?</Heading>
         <Body tone="soft" className="mt-2">
           Você pode mudar isso a qualquer momento no perfil.
@@ -228,17 +308,7 @@ function ModeStep({ onFinish }: { onFinish: (mode: DisplayMode) => void }) {
           <PreviewSample mode={preview} />
         </View>
       </View>
-
-      {/* Botão sempre no rodapé visível, independente da altura da tela */}
-      <View style={{ marginTop: 16, paddingBottom: 8 }}>
-        <Button
-          label={preview === 'accessible' ? 'Usar modo acessível' : 'Usar modo padrão'}
-          fullWidth
-          size="lg"
-          onPress={() => onFinish(preview)}
-        />
-      </View>
-    </View>
+    </StepLayout>
   );
 }
 
