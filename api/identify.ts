@@ -213,8 +213,24 @@ type Res = {
 
 // ─── Handler principal ────────────────────────────────────────────────────────
 
+// Lista de origens permitidas para CORS. Apps mobile não enviam Origin
+// (CORS não se aplica), então restringir aqui não afeta o app nativo —
+// só protege contra uso da API a partir de domínios web não autorizados.
+const ALLOWED_ORIGINS = new Set([
+  'https://plata-certa.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:9090',
+  'http://localhost:8081',
+]);
+
 export default async function handler(req: Req, res: Res): Promise<void> {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const rawOrigin = req.headers['origin'];
+  const origin = Array.isArray(rawOrigin) ? rawOrigin[0] : rawOrigin;
+  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin)
+    ? origin
+    : 'https://plata-certa.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Device-ID, X-Subscription-Tier, Authorization');
 
@@ -268,6 +284,22 @@ export default async function handler(req: Req, res: Res): Promise<void> {
 
   if (!imageBase64) {
     res.status(400).json({ error: 'bad-request', message: 'imageBase64 é obrigatório.' });
+    return;
+  }
+  // Limite de tamanho: ~3MB de base64 = ~2.2MB de imagem real. Mais que isso
+  // é redundante (Anthropic redimensiona pra ~1MP de qualquer jeito) e pode
+  // ser uso abusivo pra queimar tokens. Os clientes do app já fazem resize
+  // pra 768x768 antes de enviar.
+  const MAX_BASE64_LEN = 3_000_000;
+  if (typeof imageBase64 !== 'string' || imageBase64.length > MAX_BASE64_LEN) {
+    res.status(413).json({
+      error: 'image-too-large',
+      message: 'Imagem grande demais. Tente uma foto menor.',
+    });
+    return;
+  }
+  if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
+    res.status(400).json({ error: 'bad-request', message: 'mimeType deve ser image/jpeg ou image/png.' });
     return;
   }
   if (stage !== 'quick' && stage !== 'full') {
