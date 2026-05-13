@@ -105,6 +105,10 @@ function StepLayout({
   children: React.ReactNode;
   footer: React.ReactNode;
 }) {
+  // Espaço reservado no final do scroll para o rodapé absoluto não cobrir
+  // o conteúdo. Valor estimado: padding (12+24) + altura do botão (~56dp).
+  const FOOTER_HEIGHT = 96;
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -112,23 +116,31 @@ function StepLayout({
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: 8,
-          paddingBottom: 16,
+          paddingBottom: FOOTER_HEIGHT + 16,
           flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
       >
         {children}
       </ScrollView>
+      {/*
+        Rodapé absoluto — ancorado ao fundo do container pai. Bypassa
+        qualquer cálculo de flex/Yoga e garante 100% que o botão aparece,
+        especialmente no Android onde nesting de flex:1 em múltiplos níveis
+        pode não propagar a altura corretamente.
+      */}
       <View
         style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
           paddingHorizontal: 24,
           paddingTop: 12,
-          paddingBottom: 16,
+          paddingBottom: 24,
           backgroundColor: colors.cream,
-          // Sombra sutil pra indicar que é um rodapé fixo quando o
-          // conteúdo passa do tamanho da tela e rola.
           borderTopWidth: 1,
-          borderTopColor: 'transparent',
+          borderTopColor: colors.creamDark,
         }}
       >
         {footer}
