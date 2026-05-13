@@ -79,8 +79,8 @@ function ProgressDots({ current, total }: { current: Step; total: number }) {
 
 function WelcomeStep({ onContinue }: { onContinue: () => void }) {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', paddingVertical: 24 }}>
-      <View style={{ alignItems: 'center' }}>
+    <View style={{ flex: 1, paddingVertical: 24 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <View
           style={{
             width: 160,
@@ -101,7 +101,8 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
           Identifique suas plantas e aprenda a cuidar delas com tranquilidade.
         </Body>
       </View>
-      <View style={{ marginTop: 40 }}>
+      {/* Botão sempre no rodapé visível, independente da altura da tela */}
+      <View style={{ marginTop: 16, paddingBottom: 8 }}>
         <Button label="Começar" onPress={onContinue} fullWidth size="lg" />
       </View>
     </View>
@@ -135,39 +136,42 @@ function ExperienceStep({
 
   return (
     <View style={{ flex: 1, paddingVertical: 24 }}>
-      <Heading level={2}>Você já cuida de plantas?</Heading>
-      <Body tone="soft" className="mt-2">
-        Vamos personalizar as dicas iniciais para o seu nível.
-      </Body>
-      <View style={{ marginTop: 24, gap: 12 }}>
-        {options.map((option) => {
-          const active = selected === option.key;
-          return (
-            <Pressable
-              key={option.key}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={option.title}
-              onPress={() => setSelected(option.key)}
-              style={{
-                backgroundColor: active ? '#E1ECDF' : colors.white,
-                borderColor: active ? colors.sage : colors.creamDark,
-                borderWidth: 1.5,
-                borderRadius: 16,
-                padding: 16,
-              }}
-            >
-              <Body className="font-sans-semibold" style={{ fontWeight: '600' }}>
-                {option.title}
-              </Body>
-              <Caption tone="soft" className="mt-1">
-                {option.subtitle}
-              </Caption>
-            </Pressable>
-          );
-        })}
+      <View style={{ flex: 1 }}>
+        <Heading level={2}>Você já cuida de plantas?</Heading>
+        <Body tone="soft" className="mt-2">
+          Vamos personalizar as dicas iniciais para o seu nível.
+        </Body>
+        <View style={{ marginTop: 24, gap: 12 }}>
+          {options.map((option) => {
+            const active = selected === option.key;
+            return (
+              <Pressable
+                key={option.key}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={option.title}
+                onPress={() => setSelected(option.key)}
+                style={{
+                  backgroundColor: active ? '#E1ECDF' : colors.white,
+                  borderColor: active ? colors.sage : colors.creamDark,
+                  borderWidth: 1.5,
+                  borderRadius: 16,
+                  padding: 16,
+                }}
+              >
+                <Body className="font-sans-semibold" style={{ fontWeight: '600' }}>
+                  {option.title}
+                </Body>
+                <Caption tone="soft" className="mt-1">
+                  {option.subtitle}
+                </Caption>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
-      <View style={{ marginTop: 32 }}>
+      {/* Botão sempre no rodapé visível, independente da altura da tela */}
+      <View style={{ marginTop: 16, paddingBottom: 8 }}>
         <Button
           label="Continuar"
           fullWidth
@@ -185,45 +189,48 @@ function ModeStep({ onFinish }: { onFinish: (mode: DisplayMode) => void }) {
 
   return (
     <View style={{ flex: 1, paddingVertical: 24 }}>
-      <Heading level={2}>Como você prefere ler?</Heading>
-      <Body tone="soft" className="mt-2">
-        Você pode mudar isso a qualquer momento no perfil.
-      </Body>
+      <View style={{ flex: 1 }}>
+        <Heading level={2}>Como você prefere ler?</Heading>
+        <Body tone="soft" className="mt-2">
+          Você pode mudar isso a qualquer momento no perfil.
+        </Body>
 
-      <View style={{ marginTop: 24, gap: 12 }}>
-        <ModeCard
-          mode="standard"
-          active={preview === 'standard'}
-          onPress={() => setPreview('standard')}
-          title="Padrão"
-          description="Tamanho de fonte e contraste padrão"
-        />
-        <ModeCard
-          mode="accessible"
-          active={preview === 'accessible'}
-          onPress={() => setPreview('accessible')}
-          title="Acessível"
-          description="Letras maiores, mais contraste e botões maiores"
-        />
+        <View style={{ marginTop: 24, gap: 12 }}>
+          <ModeCard
+            mode="standard"
+            active={preview === 'standard'}
+            onPress={() => setPreview('standard')}
+            title="Padrão"
+            description="Tamanho de fonte e contraste padrão"
+          />
+          <ModeCard
+            mode="accessible"
+            active={preview === 'accessible'}
+            onPress={() => setPreview('accessible')}
+            title="Acessível"
+            description="Letras maiores, mais contraste e botões maiores"
+          />
+        </View>
+
+        <View
+          style={{
+            marginTop: 24,
+            backgroundColor: colors.white,
+            borderRadius: 16,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: colors.creamDark,
+          }}
+        >
+          <Caption tone="mute">Pré-visualização</Caption>
+          {/* Aplicamos as escalas direto aqui sem trocar o estado global,
+              para o usuário ver o efeito antes de confirmar. */}
+          <PreviewSample mode={preview} />
+        </View>
       </View>
 
-      <View
-        style={{
-          marginTop: 24,
-          backgroundColor: colors.white,
-          borderRadius: 16,
-          padding: 16,
-          borderWidth: 1,
-          borderColor: colors.creamDark,
-        }}
-      >
-        <Caption tone="mute">Pré-visualização</Caption>
-        {/* Aplicamos as escalas direto aqui sem trocar o estado global,
-            para o usuário ver o efeito antes de confirmar. */}
-        <PreviewSample mode={preview} />
-      </View>
-
-      <View style={{ marginTop: 32 }}>
+      {/* Botão sempre no rodapé visível, independente da altura da tela */}
+      <View style={{ marginTop: 16, paddingBottom: 8 }}>
         <Button
           label={preview === 'accessible' ? 'Usar modo acessível' : 'Usar modo padrão'}
           fullWidth
