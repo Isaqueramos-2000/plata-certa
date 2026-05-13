@@ -1,35 +1,23 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PlantInfoTabs } from '@/components/plant/PlantInfoTabs';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Tabs, type TabItem } from '@/components/ui/Tabs';
 import { Body, Caption, Heading } from '@/components/ui/Text';
 import { isWeb } from '@/lib/platform';
 import { colors } from '@/lib/theme';
 import { useIdentificationStore } from '@/stores/identificationStore';
 import type { IdentifySource } from '@/services/plantAI';
-import type { CommonProblem, Confidence, PlantIdentification } from '@/types/plant';
-
-type Tab = 'care' | 'calendar' | 'curiosities' | 'problems';
-
-const TAB_ITEMS: TabItem<Tab>[] = [
-  { key: 'care', label: 'Cuidados' },
-  { key: 'calendar', label: 'Calendário' },
-  { key: 'curiosities', label: 'Curiosidades' },
-  { key: 'problems', label: 'Problemas' },
-];
+import type { Confidence, PlantIdentification } from '@/types/plant';
 
 const WEB_MAX_WIDTH = 480;
 
 export default function ResultScreen() {
   const current = useIdentificationStore((s) => s.current);
-  const [activeTab, setActiveTab] = useState<Tab>('care');
 
   // Sem identificação no store (refresh ou deep link). Mostramos um
   // fallback amigável com CTA pra voltar.
@@ -68,19 +56,7 @@ export default function ResultScreen() {
             </Body>
 
             <View style={{ marginTop: 24 }}>
-              <Tabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} />
-            </View>
-
-            <View style={{ marginTop: 16 }}>
-              {activeTab === 'care' ? (
-                <CareTab identification={identification} />
-              ) : activeTab === 'calendar' ? (
-                <CalendarTab identification={identification} />
-              ) : activeTab === 'curiosities' ? (
-                <CuriositiesTab identification={identification} />
-              ) : (
-                <ProblemsTab problems={identification.commonProblems} />
-              )}
+              <PlantInfoTabs identification={identification} />
             </View>
 
           </View>
@@ -227,142 +203,6 @@ function ConfidenceNotice({ confidence }: { confidence: Confidence }) {
         Tente uma foto com a planta mais centralizada e melhor iluminação para um resultado mais preciso.
       </Caption>
     </View>
-  );
-}
-
-function CareTab({ identification }: { identification: PlantIdentification }) {
-  const { care } = identification;
-  return (
-    <Card>
-      <InfoRow icon="sun.max.fill" label="Luz" value={care.light} />
-      <Divider />
-      <InfoRow icon="drop.fill" label="Rega" value={care.water} />
-      <Divider />
-      <InfoRow label="Solo" value={care.soil} />
-      <Divider />
-      <InfoRow label="Temperatura" value={care.temperature} />
-      <Divider />
-      <InfoRow label="Umidade" value={care.humidity} />
-      <Divider />
-      <InfoRow label="Adubação" value={care.fertilizer} />
-    </Card>
-  );
-}
-
-function CalendarTab({ identification }: { identification: PlantIdentification }) {
-  const { calendar } = identification;
-  return (
-    <Card>
-      <InfoRow label="Poda" value={calendar.pruning} />
-      <Divider />
-      <InfoRow label="Replantio" value={calendar.repotting} />
-      <Divider />
-      <InfoRow label="Adubação" value={calendar.fertilizing} />
-    </Card>
-  );
-}
-
-function CuriositiesTab({ identification }: { identification: PlantIdentification }) {
-  return (
-    <Card>
-      {identification.funFacts.map((fact, i) => (
-        <View key={i}>
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-            <View
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 12,
-                backgroundColor: colors.sageLight,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Body size="small" tone="default" style={{ fontWeight: '600' }}>
-                {i + 1}
-              </Body>
-            </View>
-            <Body style={{ flex: 1 }}>{fact}</Body>
-          </View>
-          {i < identification.funFacts.length - 1 ? <Divider /> : null}
-        </View>
-      ))}
-    </Card>
-  );
-}
-
-function ProblemsTab({ problems }: { problems: CommonProblem[] }) {
-  return (
-    <View style={{ gap: 12 }}>
-      {problems.map((p, i) => (
-        <Card key={i}>
-          <Heading level={3}>{p.problem}</Heading>
-          <Caption tone="mute" className="mt-2 uppercase" style={{ letterSpacing: 1 }}>
-            Sinais
-          </Caption>
-          <Body size="small" tone="soft" className="mt-1">
-            {p.signs}
-          </Body>
-          <Caption tone="mute" className="mt-3 uppercase" style={{ letterSpacing: 1 }}>
-            O que fazer
-          </Caption>
-          <Body size="small" className="mt-1">
-            {p.solution}
-          </Body>
-        </Card>
-      ))}
-    </View>
-  );
-}
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon?: Parameters<typeof IconSymbol>[0]['name'];
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-      {icon ? (
-        <View
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            backgroundColor: colors.creamDark,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: 2,
-          }}
-        >
-          <IconSymbol name={icon} size={16} color={colors.sageDark} />
-        </View>
-      ) : null}
-      <View style={{ flex: 1 }}>
-        <Caption tone="mute" style={{ letterSpacing: 0.5 }}>
-          {label.toUpperCase()}
-        </Caption>
-        <Body size="small" className="mt-0.5">
-          {value}
-        </Body>
-      </View>
-    </View>
-  );
-}
-
-function Divider() {
-  return (
-    <View
-      style={{
-        height: 1,
-        backgroundColor: colors.creamDark,
-        marginVertical: 12,
-        marginHorizontal: -16,
-      }}
-    />
   );
 }
 

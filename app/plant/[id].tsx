@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { confirmDestructive } from '@/lib/confirm';
 
+import { PlantInfoTabs } from '@/components/plant/PlantInfoTabs';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -128,6 +129,13 @@ export default function PlantDetailScreen() {
                 />
                 <ActionTile icon="camera.fill" label="Foto" onPress={onAddPhoto} />
               </View>
+            </View>
+
+            <View style={{ marginTop: 24 }}>
+              <Caption tone="mute" style={{ letterSpacing: 1, marginBottom: 8 }}>
+                INFORMAÇÕES DA PLANTA
+              </Caption>
+              <PlantInfoTabs identification={plant.identification} />
             </View>
 
             <View style={{ marginTop: 24 }}>
