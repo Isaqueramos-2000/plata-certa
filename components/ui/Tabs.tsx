@@ -18,10 +18,12 @@ type Props<T extends string> = {
 
 /**
  * Segmented tabs estilo iOS — usadas dentro da tela de resultado
- * para alternar entre Cuidados / Calendário / Curiosidades.
+ * para alternar entre Cuidados / Calendário / Curiosidades / Problemas.
  *
- * Para a navegação principal usamos expo-router Tabs no _layout.tsx;
- * este componente é só para abas dentro de uma única tela.
+ * IMPLEMENTAÇÃO: usa style estático (objeto) em vez de `style={({pressed}) => …}`.
+ * O callback do Pressable tem bug conhecido no Android + new arch onde
+ * o backgroundColor não aplica no primeiro render, deixando o "tab ativo"
+ * sem o fundo branco que o diferencia visualmente.
  */
 export function Tabs<T extends string>({ items, value, onChange, className = '' }: Props<T>) {
   const minHeight = useTouchTarget();
@@ -33,7 +35,7 @@ export function Tabs<T extends string>({ items, value, onChange, className = '' 
         backgroundColor: colors.creamDark,
         borderRadius: 12,
         padding: 4,
-        gap: 2,
+        gap: 4,
       }}
     >
       {items.map((item) => {
@@ -45,15 +47,16 @@ export function Tabs<T extends string>({ items, value, onChange, className = '' 
             accessibilityLabel={item.label}
             accessibilityState={{ selected: active }}
             onPress={() => onChange(item.key)}
-            style={({ pressed }) => ({
+            style={{
               flex: 1,
               minHeight: minHeight - 12,
               borderRadius: 8,
-              backgroundColor: active ? colors.white : pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+              backgroundColor: active ? colors.white : 'transparent',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingHorizontal: 8,
-              // Sombra na aba ativa
+              paddingVertical: 6,
+              paddingHorizontal: 6,
+              // Sombra/borda na aba ativa pra destacar
               ...(active
                 ? {
                     shadowColor: '#000',
@@ -65,31 +68,19 @@ export function Tabs<T extends string>({ items, value, onChange, className = '' 
                     borderColor: 'rgba(0,0,0,0.06)',
                   }
                 : {}),
-            })}
+            }}
           >
             <Body
               size="small"
               style={{
-                fontWeight: active ? '700' : '400',
+                fontWeight: active ? '700' : '500',
                 color: active ? colors.sageDark : colors.inkMute,
                 fontSize: 13,
+                textAlign: 'center',
               }}
             >
               {item.label}
             </Body>
-            {/* Linha de destaque na base da aba ativa */}
-            {active && (
-              <View
-                style={{
-                  position: 'absolute',
-                  bottom: 5,
-                  width: 16,
-                  height: 2,
-                  borderRadius: 2,
-                  backgroundColor: colors.sage,
-                }}
-              />
-            )}
           </Pressable>
         );
       })}

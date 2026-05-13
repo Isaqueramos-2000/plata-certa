@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -100,16 +101,16 @@ export default function PlantDetailScreen() {
             <Header plant={plant} />
             <WateringSection plant={plant} status={status} />
 
+            {/* 1) Ações Rápidas */}
             <View style={{ marginTop: 24 }}>
-              <Caption tone="mute" style={{ letterSpacing: 1 }}>
+              <Caption tone="mute" style={{ letterSpacing: 1, marginBottom: 12 }}>
                 AÇÕES RÁPIDAS
               </Caption>
               <View
                 style={{
                   flexDirection: 'row',
                   flexWrap: 'wrap',
-                  gap: 8,
-                  marginTop: 8,
+                  gap: 10,
                 }}
               >
                 <ActionTile
@@ -131,18 +132,20 @@ export default function PlantDetailScreen() {
               </View>
             </View>
 
-            <View style={{ marginTop: 24 }}>
-              <Caption tone="mute" style={{ letterSpacing: 1, marginBottom: 8 }}>
-                INFORMAÇÕES DA PLANTA
-              </Caption>
-              <PlantInfoTabs identification={plant.identification} />
-            </View>
-
-            <View style={{ marginTop: 24 }}>
-              <Caption tone="mute" style={{ letterSpacing: 1 }}>
+            {/* 2) Histórico */}
+            <View style={{ marginTop: 28 }}>
+              <Caption tone="mute" style={{ letterSpacing: 1, marginBottom: 12 }}>
                 HISTÓRICO
               </Caption>
               <Timeline entries={plant.careLog} />
+            </View>
+
+            {/* 3) Informações detalhadas da planta (no final) */}
+            <View style={{ marginTop: 28 }}>
+              <Caption tone="mute" style={{ letterSpacing: 1, marginBottom: 12 }}>
+                INFORMAÇÕES DA PLANTA
+              </Caption>
+              <PlantInfoTabs identification={plant.identification} />
             </View>
 
           </View>
@@ -299,12 +302,18 @@ function ActionTile({
   label: string;
   onPress: () => void;
 }) {
+  // Mesmo padrão dos outros Pressables — useState pra evitar bug
+  // do Android+new arch que faz o callback de style ignorar bg.
+  const [pressed, setPressed] = useState(false);
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => ({
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      style={{
         flexBasis: '48%',
         flexGrow: 1,
         flexDirection: 'row',
@@ -316,10 +325,21 @@ function ActionTile({
         backgroundColor: pressed ? colors.creamDark : colors.white,
         borderWidth: 1,
         borderColor: colors.creamDark,
-      })}
+      }}
     >
-      <IconSymbol name={icon} size={20} color={colors.sageDark} />
-      <Body size="small" style={{ fontWeight: '500' }}>
+      <View
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          backgroundColor: colors.sageLight,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <IconSymbol name={icon} size={16} color={colors.sageDark} />
+      </View>
+      <Body size="small" style={{ fontWeight: '600', flexShrink: 1 }}>
         {label}
       </Body>
     </Pressable>
