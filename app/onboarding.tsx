@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -36,6 +36,7 @@ export default function Onboarding() {
   const setHasOnboarded = useSettingsStore((s) => s.setHasOnboarded);
   const setMode = useSettingsStore((s) => s.setMode);
   const setGardenerLevel = useSettingsStore((s) => s.setGardenerLevel);
+  const insets = useSafeAreaInsets();
 
   const next = () => setStep((s) => (Math.min(s + 1, 3) as Step));
 
@@ -47,26 +48,34 @@ export default function Onboarding() {
     router.replace('/paywall');
   };
 
+  // Espaço extra no rodapé pra garantir que o botão não fique grudado na
+  // barra de gestos do Android. Soma o safe-area inset à um padding fixo.
+  const bottomGap = Math.max(insets.bottom, 16) + 16;
+
   return (
-    <SafeAreaView
-      edges={['top', 'bottom']}
-      style={{ flex: 1, backgroundColor: colors.cream }}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.cream,
+        paddingTop: insets.top,
+      }}
     >
       <ProgressDots current={step} total={3} />
 
       {step === 1 ? (
-        <WelcomeStep onContinue={next} />
+        <WelcomeStep onContinue={next} bottomGap={bottomGap} />
       ) : step === 2 ? (
         <ExperienceStep
+          bottomGap={bottomGap}
           onContinue={(level) => {
             setGardenerLevel(level);
             next();
           }}
         />
       ) : (
-        <ModeStep onFinish={finish} />
+        <ModeStep onFinish={finish} bottomGap={bottomGap} />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -101,13 +110,16 @@ function ProgressDots({ current, total }: { current: Step; total: number }) {
 function StepLayout({
   children,
   footer,
+  bottomGap,
 }: {
   children: React.ReactNode;
   footer: React.ReactNode;
+  /** Padding extra para o safe-area do Android (gesture bar/nav buttons). */
+  bottomGap: number;
 }) {
-  // Espaço reservado no final do scroll para o rodapé absoluto não cobrir
-  // o conteúdo. Valor estimado: padding (12+24) + altura do botão (~56dp).
-  const FOOTER_HEIGHT = 96;
+  // Espaço reservado no final do scroll para o rodapé não cobrir o conteúdo.
+  // Soma altura do botão (~56dp) + padding top (12) + padding bottom (bottomGap).
+  const FOOTER_HEIGHT = 56 + 12 + bottomGap;
 
   return (
     <View style={{ flex: 1 }}>
@@ -124,10 +136,11 @@ function StepLayout({
         {children}
       </ScrollView>
       {/*
-        Rodapé absoluto — ancorado ao fundo do container pai. Bypassa
-        qualquer cálculo de flex/Yoga e garante 100% que o botão aparece,
-        especialmente no Android onde nesting de flex:1 em múltiplos níveis
-        pode não propagar a altura corretamente.
+        Rodapé absoluto — ancorado ao fundo do container pai.
+        Manualmente adicionamos o safe-area inset via `bottomGap` para
+        funcionar de forma idêntica em todas as plataformas, sem depender
+        do SafeAreaView (que tem comportamentos sutis no Android com
+        edge-to-edge ativado).
       */}
       <View
         style={{
@@ -137,7 +150,7 @@ function StepLayout({
           bottom: 0,
           paddingHorizontal: 24,
           paddingTop: 12,
-          paddingBottom: 24,
+          paddingBottom: bottomGap,
           backgroundColor: colors.cream,
           borderTopWidth: 1,
           borderTopColor: colors.creamDark,
@@ -151,9 +164,16 @@ function StepLayout({
 
 // ─── Passo 1: Boas-vindas ───────────────────────────────────────────────────
 
-function WelcomeStep({ onContinue }: { onContinue: () => void }) {
+function WelcomeStep({
+  onContinue,
+  bottomGap,
+}: {
+  onContinue: () => void;
+  bottomGap: number;
+}) {
   return (
     <StepLayout
+      bottomGap={bottomGap}
       footer={<Button label="Começar" onPress={onContinue} fullWidth size="lg" />}
     >
       <View
@@ -192,8 +212,10 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
 
 function ExperienceStep({
   onContinue,
+  bottomGap,
 }: {
   onContinue: (level: GardenerLevel) => void;
+  bottomGap: number;
 }) {
   const [selected, setSelected] = useState<GardenerLevel | null>(null);
 
@@ -217,6 +239,7 @@ function ExperienceStep({
 
   return (
     <StepLayout
+      bottomGap={bottomGap}
       footer={
         <Button
           label="Continuar"
@@ -267,11 +290,18 @@ function ExperienceStep({
 
 // ─── Passo 3: Modo de leitura ───────────────────────────────────────────────
 
-function ModeStep({ onFinish }: { onFinish: (mode: DisplayMode) => void }) {
+function ModeStep({
+  onFinish,
+  bottomGap,
+}: {
+  onFinish: (mode: DisplayMode) => void;
+  bottomGap: number;
+}) {
   const [preview, setPreview] = useState<DisplayMode>('standard');
 
   return (
     <StepLayout
+      bottomGap={bottomGap}
       footer={
         <Button
           label={preview === 'accessible' ? 'Usar modo acessível' : 'Usar modo padrão'}
