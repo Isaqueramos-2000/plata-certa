@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, View } from 'react-native'; // useState para press feedback nos PlanCards
 
 import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -184,28 +184,34 @@ function PlanCard({
   onSelect: () => void;
 }) {
   const isBest = offering.highlight === 'best';
+  const [pressed, setPressed] = useState(false);
 
   return (
     <Pressable
       onPress={onSelect}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={`${offering.title} ${offering.priceString}`}
-      style={({ pressed }) => ({
+      style={{
         borderRadius: 16,
         borderWidth: 2,
         borderColor: selected ? colors.sage : colors.creamDark,
         backgroundColor: pressed ? colors.creamDark : colors.white,
-        padding: 16,
+        // Espaço extra no topo só para o card destacado (badge "Melhor escolha")
+        paddingTop: isBest ? 28 : 16,
+        paddingBottom: 16,
+        paddingHorizontal: 16,
         opacity: pressed ? 0.85 : 1,
-      })}
+      }}
     >
       {isBest ? (
         <View
           style={{
             position: 'absolute',
-            top: -10,
-            right: 16,
+            top: -12,
+            left: 16,
             backgroundColor: colors.terracotta,
             paddingHorizontal: 10,
             paddingVertical: 4,

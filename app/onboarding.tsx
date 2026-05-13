@@ -156,12 +156,9 @@ function StepLayout({
           paddingHorizontal: 24,
           paddingTop: 16,
           paddingBottom: bottomGap,
-          // DEBUG temporário: fundo creme-escuro (visível mas suave)
-          // pra confirmar que a área do rodapé está sendo renderizada
-          // corretamente. Trocar pra colors.cream depois de validar.
-          backgroundColor: colors.creamDark,
-          borderTopWidth: 2,
-          borderTopColor: colors.sage,
+          backgroundColor: colors.cream,
+          borderTopWidth: 1,
+          borderTopColor: colors.creamDark,
         }}
       >
         {footer}

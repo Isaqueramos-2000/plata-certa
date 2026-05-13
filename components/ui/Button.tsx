@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, View, type PressableProps } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -44,10 +45,11 @@ const VARIANT_TEXT_TONE: Record<Variant, 'inverse' | 'default'> = {
  * settingsStore (48dp padrão / 56dp acessível) — sempre maior que
  * o exigido pelas guidelines de iOS/Android.
  *
- * Não usamos `className` aqui: o NativeWind v4 descarta o callback
- * de `style={({pressed}) => …}` do Pressable quando combinado com
- * className, deixando o botão sem altura/cor de fundo. Por isso todo
- * o styling sai por inline style.
+ * IMPLEMENTAÇÃO: usa style STÁTICO (objeto, não função) com `useState`
+ * pra controle do pressed. A versão antiga com `style={({pressed}) => …}`
+ * falhava no Android + new arch (Fabric): o callback era processado mas
+ * a cor de fundo não era aplicada na primeira renderização, deixando
+ * o botão "invisível" (mesma cor do parent).
  */
 export function Button({
   label,
@@ -61,6 +63,7 @@ export function Button({
 }: Props) {
   const minTouch = useTouchTarget();
   const accessible = useSettingsStore((s) => s.mode === 'accessible');
+  const [pressed, setPressed] = useState(false);
 
   const height = size === 'lg' ? minTouch + 8 : minTouch;
   const paddingHorizontal = size === 'lg' ? 24 : 18;
@@ -68,31 +71,33 @@ export function Button({
   // Em modo acessível ícones ganham um pouco de tamanho extra também.
   const iconSize = accessible ? 22 : 20;
 
+  const bgColor = disabled
+    ? colors.creamDark
+    : pressed
+      ? VARIANT_BG_PRESSED[variant]
+      : VARIANT_BG[variant];
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
-      style={({ pressed }) => ({
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      style={{
         height,
         paddingHorizontal,
         borderRadius: 12,
-        backgroundColor: disabled
-          ? colors.creamDark
-          : pressed
-            ? VARIANT_BG_PRESSED[variant]
-            : VARIANT_BG[variant],
+        backgroundColor: bgColor,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         opacity: disabled ? 0.6 : 1,
         borderWidth: variant === 'ghost' || variant === 'secondary' ? 1 : 0,
         borderColor: colors.creamDark,
-        // Em fullWidth a gente força stretch. Sem fullWidth, deixamos
-        // o pai controlar o alinhamento (center/flex-start/etc).
         ...(fullWidth ? { alignSelf: 'stretch' as const } : null),
-      })}
+      }}
       {...rest}
     >
       {iconLeft ? (

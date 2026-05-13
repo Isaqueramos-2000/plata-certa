@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, View, type PressableProps, type ViewProps } from 'react-native';
 
 import { colors, shadow } from '@/lib/theme';
@@ -11,6 +12,16 @@ type Props = ViewProps & {
   className?: string;
 };
 
+/**
+ * Card padrão do app. Pode ser interativo (Pressable) ou estático (View).
+ *
+ * IMPLEMENTAÇÃO: a versão interativa usa style STÁTICO com `useState`
+ * pra controle do pressed, em vez de `style={({pressed}) => […]}`. A
+ * versão antiga com array+função falhava no Android + new arch (Fabric):
+ * cores customizadas passadas via prop `style` não eram aplicadas na
+ * primeira renderização, deixando CTAs com fundo sage praticamente
+ * invisíveis.
+ */
 export function Card({
   onPress,
   accessibilityLabel,
@@ -20,6 +31,8 @@ export function Card({
   children,
   ...rest
 }: Props) {
+  const [pressed, setPressed] = useState(false);
+
   const baseStyle = {
     backgroundColor: colors.white,
     borderRadius: 16,
@@ -35,12 +48,10 @@ export function Card({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
         className={className}
-        style={({ pressed }) => [
-          baseStyle,
-          { opacity: pressed ? 0.85 : 1 },
-          style as object,
-        ]}
+        style={[baseStyle, { opacity: pressed ? 0.85 : 1 }, style]}
       >
         {children}
       </Pressable>
