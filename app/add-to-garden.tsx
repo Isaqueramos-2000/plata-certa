@@ -39,9 +39,11 @@ export default function AddToGardenScreen() {
       photoUri: current.uri,
       nickname,
     });
-    // Substitui o modal pela tela de detalhe.
+    // Fecha o modal + tela de resultado, e empurra o detalhe da planta
+    // por cima do (tabs). Importante: NÃO usar `replace` aqui, senão
+    // o stack fica sem nenhuma tela atrás e o "Voltar" do detalhe quebra.
     router.dismissAll?.();
-    router.replace(`/plant/${id}`);
+    router.push(`/plant/${id}`);
   };
 
   return (
